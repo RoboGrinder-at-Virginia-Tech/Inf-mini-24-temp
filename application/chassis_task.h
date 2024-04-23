@@ -94,8 +94,11 @@ Omni Drive: 轮到中心250mm = 0.25m, 45度夹角
 
 6-18 Omni不是上面这样算的:
 MOTOR_DISTANCE_TO_CENTER是车轮到旋转中心的距离 = 0.258093975f
+
+4-21-2023 mini infantry
+MOTOR_DISTANCE_TO_CENTER是车轮到旋转中心的距离 = 0.211585f
 */
-#define MOTOR_DISTANCE_TO_CENTER 0.258093975f //0.353553391f //0.358f //0.3525f
+#define MOTOR_DISTANCE_TO_CENTER 0.211585f //0.258093975f //0.353553391f //0.358f //0.3525f
 #define OMNI_WHEEL_RADIUS 0.0762f
 //sin cos各个象限的45度 绝对值等于 omni wheel angle inverse kinematics coefficient
 #define OWHE_ANG_INVK_COEF 0.707106781f
@@ -132,8 +135,11 @@ SZL 5-21-2022 重新算
 
 3-22: Omni wheel recalculation: 轮子直径d = 152mm, r = 152/2 = 76mm = 0.076m
 2pi/60 * 1/19 * (0.076m Hex轮子半径) = 4.188790205e-4
+
+4-21-2024: new mini infantry: 轮子直径d = 152.4mm, r = 152.4/2 = 76.2mm = 0.0762m 或 直径测量的 r = 0.08076m
+2pi/60 * 1/14 * (0.0762m Hex轮子半径) = 5.699746672e-4
 */
-#define CHASSIS_MOTOR_RPM_TO_VECTOR_SEN 4.188790205e-4
+#define CHASSIS_MOTOR_RPM_TO_VECTOR_SEN 5.699746672e-4
 
 //single chassis motor max speed
 //单个底盘电机最大速度
