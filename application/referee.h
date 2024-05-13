@@ -5,7 +5,8 @@
 
 #include "protocol.h"
 
-//SZL更具 串口协议附录 V1.3 加了新的机器人类型 和 操作手类型
+// 串口协议附录 https://www.robomaster.com/zh-CN/products/components/referee
+
 typedef enum
 {
     RED_HERO        = 1,
@@ -56,98 +57,72 @@ typedef enum
     PROGRESS_BATTLE         = 4,
     PROGRESS_CALCULATING    = 5,
 } game_progress_t;
-typedef __packed struct //0001 SZL 5-15-2023
-{
-    uint8_t game_type : 4;
-		uint8_t game_progress : 4;
-		uint16_t stage_remain_time;
-		uint64_t SyncTimeStamp;
-} ext_game_state_t;
 
-typedef __packed struct //0002
+typedef __packed struct // 0x0001
 {
-    uint8_t winner;
-} ext_game_result_t;
+	uint8_t game_type : 4;
+	uint8_t game_progress : 4;
+	uint16_t stage_remain_time;
+	uint64_t SyncTimeStamp;
+}game_status_t;
 
-typedef __packed struct //0003 SZL 5-15-2023
+typedef __packed struct // 0x0002
 {
-    uint16_t red_1_robot_HP;
-		uint16_t red_2_robot_HP;
-		uint16_t red_3_robot_HP;
-		uint16_t red_4_robot_HP;
-		uint16_t red_5_robot_HP;
-		uint16_t red_7_robot_HP;
-		uint16_t red_outpost_HP;
-		uint16_t red_base_HP;
-		uint16_t blue_1_robot_HP;
-		uint16_t blue_2_robot_HP;
-		uint16_t blue_3_robot_HP;
-		uint16_t blue_4_robot_HP;
-		uint16_t blue_5_robot_HP;
-		uint16_t blue_7_robot_HP;
-		uint16_t blue_outpost_HP;
-		uint16_t blue_base_HP;
-} ext_game_robot_HP_t;
+ uint8_t winner;
+}game_result_t;
 
-/*
-0x0005: TODO: .c中具体收包程序
-*/
-typedef __packed struct //0005
+typedef __packed struct // 0x0003
 {
-		uint8_t F1_zone_status:1;
-		uint8_t F1_zone_buff_debuff_status:3;
-		uint8_t F2_zone_status:1;
-		uint8_t F2_zone_buff_debuff_status:3;
-		uint8_t F3_zone_status:1;
-		uint8_t F3_zone_buff_debuff_status:3;
-		uint8_t F4_zone_status:1;
-		uint8_t F4_zone_buff_debuff_status:3;
-		uint8_t F5_zone_status:1;
-		uint8_t F5_zone_buff_debuff_status:3;
-		uint8_t F6_zone_status:1;
-		uint8_t F6_zone_buff_debuff_status:3;
-		uint16_t red1_bullet_left;
-		uint16_t red2_bullet_left;
-		uint16_t blue1_bullet_left;
-		uint16_t blue2_bullet_left;
-		uint8_t lurk_mode;
-		uint8_t res;
-} ext_ICRA_buff_debuff_zone_and_lurk_status_t;
+	uint16_t red_1_robot_HP;
+	uint16_t red_2_robot_HP;
+	uint16_t red_3_robot_HP;
+	uint16_t red_4_robot_HP;
+	uint16_t red_5_robot_HP;
+	uint16_t red_7_robot_HP; // sentry
+	uint16_t red_outpost_HP;
+	uint16_t red_base_HP;
+	uint16_t blue_1_robot_HP;
+	uint16_t blue_2_robot_HP;
+	uint16_t blue_3_robot_HP; 
+	uint16_t blue_4_robot_HP;
+	uint16_t blue_5_robot_HP;
+	uint16_t blue_7_robot_HP;
+	uint16_t blue_outpost_HP;
+	uint16_t blue_base_HP;
+}game_robot_HP_t; 
 
-typedef __packed struct //0101
-{
-    uint32_t event_type;
-} ext_event_data_t;
+/* 0x0005 deleted */
 
-typedef __packed struct //0x0102
+typedef __packed struct // 0x0101
 {
-    uint8_t supply_projectile_id;
-		uint8_t supply_robot_id;
-		uint8_t supply_projectile_step;
-		uint8_t supply_projectile_num;
+	uint32_t event_data;
+}event_data_t; 
+
+
+typedef __packed struct // 0x0102
+{
+	uint8_t reserved;
+	uint8_t supply_robot_id;
+	uint8_t supply_projectile_step;
+	uint8_t supply_projectile_num;
 } ext_supply_projectile_action_t;
 
+/* 0x0103 deleted */
 
-typedef __packed struct //0x0103
+typedef __packed struct // 0x0104
 {
-    uint8_t supply_projectile_id;
-    uint8_t supply_robot_id;
-    uint8_t supply_num;
-} ext_supply_projectile_booking_t;
+	uint8_t level;
+	uint8_t offending_robot_id;
+	uint8_t count;
+}referee_warning_t; 
 
-typedef __packed struct //0x0104 - 3-19-2024
+typedef __packed struct // 0x0105
 {
-    uint8_t level;
-	 uint8_t offending_robot_id;
-	 uint8_t count;
-} ext_referee_warning_t;
+	uint8_t dart_remaining_time;
+	uint16_t dart_info;
+}dart_info_t; 
 
-typedef __packed struct //0x0105 飞镖相关
-{
-		uint8_t dart_remaining_time;
-} ext_dart_remaining_time_t;
-
-typedef __packed struct //0x0201 SZL 5-14-2022 新增 非常重要数据 - 
+typedef __packed struct // 0x0201
 {
 	uint8_t robot_id;
 	uint8_t robot_level;
@@ -155,11 +130,11 @@ typedef __packed struct //0x0201 SZL 5-14-2022 新增 非常重要数据 -
 	uint16_t maximum_HP;
 	uint16_t shooter_barrel_cooling_value;
 	uint16_t shooter_barrel_heat_limit;
-	uint16_t chassis_power_limit; 
+	uint16_t chassis_power_limit;
 	uint8_t power_management_gimbal_output : 1;
 	uint8_t power_management_chassis_output : 1;
 	uint8_t power_management_shooter_output : 1;
-} ext_game_robot_status_t;
+}robot_status_t; 
 
 /*
 下面这个是判断枪口热量用了的:
@@ -176,81 +151,73 @@ typedef __packed struct //0x0202
 shooter_heat0 对应 shooter_id1_17mm_cooling_heat
 shooter_heat1 对应 shooter_id2_17mm_cooling_heat
 */
-typedef __packed struct //0x0202 3-19-2024
+typedef __packed struct // 0x0202
 {
-    uint16_t chassis_volt;
-		uint16_t chassis_current;
-		float chassis_power;
-		uint16_t chassis_power_buffer;
-		uint16_t shooter_17mm_1_barrel_heat;
-		uint16_t shooter_17mm_2_barrel_heat;
-		uint16_t shooter_42mm_barrel_heat;
-} ext_power_heat_data_t;
+ uint16_t chassis_voltage;
+ uint16_t chassis_current;
+ float chassis_power;
+ uint16_t buffer_energy;
+ uint16_t shooter_17mm_1_barrel_heat;
+ uint16_t shooter_17mm_2_barrel_heat;
+ uint16_t shooter_42mm_barrel_heat;
+}power_heat_data_t; 
 
-typedef __packed struct //0x0203 3-19-2024  ------------- 以下还未改3-19-2024
-{
-    float x;
-    float y;
-    float angle;
-} ext_game_robot_pos_t;
 
-//typedef __packed struct //0x0204 old
-//{
-//    uint8_t power_rune_buff;
-//} ext_buff_musk_t;
-typedef __packed struct //0x0204
+typedef __packed struct // 0x0203
 {
-uint8_t power_rune_buff;
-}ext_buff_t;
+ float x;
+ float y;
+ float angle;
+}robot_pos_t; 
 
-//typedef __packed struct //0x0205 old
-//{
-//    uint8_t energy_point;
-//    uint8_t attack_time;
-//} aerial_robot_energy_t;
-typedef __packed struct //0x0205
+typedef __packed struct // 0x0204
 {
-uint8_t attack_time;
-} aerial_robot_energy_t;
+ uint8_t recovery_buff;
+ uint8_t cooling_buff;
+ uint8_t defence_buff;
+ uint8_t vulnerability_buff;
+ uint16_t attack_buff;
+}buff_t;
 
-//typedef __packed struct //0x0206 old
-//{
-//    uint8_t armor_type : 4;
-//    uint8_t hurt_type : 4;
-//} ext_robot_hurt_t;
-typedef __packed struct //0x0206
+typedef __packed struct // 0x0205
 {
-uint8_t armor_id : 4;
-uint8_t hurt_type : 4;
-} ext_robot_hurt_t;
+ uint8_t airforce_status;
+ uint8_t time_remain;
+}air_support_data_t;
 
-typedef __packed struct //0x0207
+typedef __packed struct // 0x0206
 {
-    uint8_t bullet_type;
-		uint8_t shooter_id;//新增的
-    uint8_t bullet_freq;
-    float bullet_speed; //低频率的速度反馈
-} ext_shoot_data_t;
+ uint8_t armor_id : 4;
+ uint8_t HP_deduction_reason : 4;
+}hurt_data_t;
 
-typedef __packed struct //0x0208 RMUL 金币相关 SZL改为串口协议附录V1.3
+typedef __packed struct // 0x0207
 {
-    uint16_t bullet_remaining_num_17mm;
-		uint16_t bullet_remaining_num_42mm;
-		uint16_t coin_remaining_num;
-} ext_bullet_remaining_t;
+ uint8_t bullet_type;
+ uint8_t shooter_number;
+ uint8_t launching_frequency;
+ float initial_speed;
+}shoot_data_t;
 
-typedef __packed struct //0x0209 RFID状态
+typedef __packed struct // 0x0208
 {
-		uint32_t rfid_status;
-} ext_rfid_status_t;
+ uint16_t projectile_allowance_17mm;
+ uint16_t projectile_allowance_42mm;
+ uint16_t remaining_gold_coin;
+}projectile_allowance_t;
 
-typedef __packed struct //0x020A 飞镖机器人客户端指令数据
+typedef __packed struct // 0x0209
 {
-		uint8_t dart_launch_opening_status;
-		uint8_t dart_attack_target;
-		uint16_t target_change_time;
-		uint16_t operate_launch_cmd_time;
-} ext_dart_client_cmd_t;
+ uint32_t rfid_status;
+}rfid_status_t; 
+
+typedef __packed struct // 0x020A
+{
+ uint8_t dart_launch_opening_status;
+ uint8_t reserved;
+ uint16_t target_change_time;
+ uint16_t latest_launch_cmd_time;
+}dart_client_cmd_t; 
 
 ////SZL改为串口协议附录V1.3l 新的交互数据接收信息
 //typedef __packed struct //0x0301 old
