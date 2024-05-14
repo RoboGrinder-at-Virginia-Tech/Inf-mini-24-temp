@@ -46,9 +46,14 @@ typedef enum
 	    the transmit is handled in UI task(or referee_interaction_task)
 		*/
 		
-		// TODO: 0x302 图传链路 等, video tx route, handled in referee rx task
+		// TODO: 图传链路 等, video communication route, handled in referee rx task
 		
-																			= 0x0303, // not used
+		// TODO: 0x0302 图传链路, 自定义控制器
+		
+		MAP_COMMAND_CMD_ID								=	0x0303, // not used
+		
+		//TODO: 0x
+		
 }referee_cmd_id_t;
 typedef  struct
 {
