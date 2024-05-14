@@ -52,7 +52,7 @@ typedef enum
 		
 		MAP_COMMAND_CMD_ID								=	0x0303, // not used
 		
-		//TODO: 0x
+		//TODO: 0x0304 Í¼´«Á´Â·, ¼üÊó
 		
 }referee_cmd_id_t;
 typedef  struct
