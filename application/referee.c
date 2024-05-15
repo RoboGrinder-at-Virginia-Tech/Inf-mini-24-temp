@@ -25,7 +25,7 @@ air_support_data_t air_support_data;
 hurt_data_t hurt_data;
 shoot_data_t shoot_data;
 projectile_allowance_t projectile_allowance;
-ext_student_interactive_header_data_t student_interactive_data_t;
+robot_interaction_data_t robot_interaction_data;
 
 
 uint32_t last_robot_state_rx_timestamp; //上一次收到robot_state信息的时间戳
@@ -55,7 +55,7 @@ void init_referee_struct_data(void)
     memset(&projectile_allowance, 0, sizeof(projectile_allowance_t));
 
 
-    memset(&student_interactive_data_t, 0, sizeof(ext_student_interactive_header_data_t));
+    memset(&robot_interaction_data, 0, sizeof(robot_interaction_data_t));
 
 
 
@@ -152,7 +152,7 @@ void referee_data_solve(uint8_t *frame)
         break;
         case ROBOT_INTERACTION_DATA_CMD_ID:
         {
-            memcpy(&student_interactive_data_t, frame + index, sizeof(student_interactive_data_t));
+            memcpy(&robot_interaction_data, frame + index, sizeof(robot_interaction_data_t));
         }
         break;
         default:

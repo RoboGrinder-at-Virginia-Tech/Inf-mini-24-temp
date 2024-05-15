@@ -153,159 +153,146 @@ shooter_heat1 对应 shooter_id2_17mm_cooling_heat
 */
 typedef __packed struct // 0x0202
 {
- uint16_t chassis_voltage;
- uint16_t chassis_current;
- float chassis_power;
- uint16_t buffer_energy;
- uint16_t shooter_17mm_1_barrel_heat;
- uint16_t shooter_17mm_2_barrel_heat;
- uint16_t shooter_42mm_barrel_heat;
+	uint16_t chassis_voltage;
+	uint16_t chassis_current;
+	float chassis_power;
+	uint16_t buffer_energy;
+	uint16_t shooter_17mm_1_barrel_heat;
+	uint16_t shooter_17mm_2_barrel_heat;
+	uint16_t shooter_42mm_barrel_heat;
 }power_heat_data_t; 
 
 
 typedef __packed struct // 0x0203
 {
- float x;
- float y;
- float angle;
+	float x;
+	float y;
+	float angle;
 }robot_pos_t; 
 
 typedef __packed struct // 0x0204
 {
- uint8_t recovery_buff;
- uint8_t cooling_buff;
- uint8_t defence_buff;
- uint8_t vulnerability_buff;
- uint16_t attack_buff;
+	uint8_t recovery_buff;
+	uint8_t cooling_buff;
+	uint8_t defence_buff;
+	uint8_t vulnerability_buff;
+	uint16_t attack_buff;
 }buff_t;
 
 typedef __packed struct // 0x0205
 {
- uint8_t airforce_status;
- uint8_t time_remain;
+	uint8_t airforce_status;
+	uint8_t time_remain;
 }air_support_data_t;
 
 typedef __packed struct // 0x0206
 {
- uint8_t armor_id : 4;
- uint8_t HP_deduction_reason : 4;
+	uint8_t armor_id : 4;
+	uint8_t HP_deduction_reason : 4;
 }hurt_data_t;
 
 typedef __packed struct // 0x0207
 {
- uint8_t bullet_type;
- uint8_t shooter_number;
- uint8_t launching_frequency;
- float initial_speed;
+	uint8_t bullet_type;
+	uint8_t shooter_number;
+	uint8_t launching_frequency;
+	float initial_speed;
 }shoot_data_t;
 
 typedef __packed struct // 0x0208
 {
- uint16_t projectile_allowance_17mm;
- uint16_t projectile_allowance_42mm;
- uint16_t remaining_gold_coin;
+	uint16_t projectile_allowance_17mm;
+	uint16_t projectile_allowance_42mm;
+	uint16_t remaining_gold_coin;
 }projectile_allowance_t;
 
 typedef __packed struct // 0x0209
 {
- uint32_t rfid_status;
+	uint32_t rfid_status;
 }rfid_status_t; 
 
 typedef __packed struct // 0x020A
 {
- uint8_t dart_launch_opening_status;
- uint8_t reserved;
- uint16_t target_change_time;
- uint16_t latest_launch_cmd_time;
+	uint8_t dart_launch_opening_status;
+	uint8_t reserved;
+	uint16_t target_change_time;
+	uint16_t latest_launch_cmd_time;
 }dart_client_cmd_t; 
 
-////SZL改为串口协议附录V1.3l 新的交互数据接收信息
-//typedef __packed struct //0x0301 old
-//{
-//    uint16_t data_cmd_id;
-//		uint16_t sender_ID;
-//		uint16_t receiver_ID;
-//} ext_student_interactive_data_t;
-typedef __packed struct //0x0301 新 V1.4
+typedef __packed struct // 0x020B
 {
-		uint16_t data_cmd_id;
-		uint16_t sender_ID;
-		uint16_t receiver_ID;
-}ext_student_interactive_header_data_t;
+	float hero_x;
+	float hero_y;
+	float engineer_x;
+	float engineer_y;
+	float standard_3_x;
+	float standard_3_y;
+	float standard_4_x;
+	float standard_4_y;
+	float standard_5_x;
+	float standard_5_y;
+}ground_robot_position_t;
 
-////裁判系统串口协议附录V1.4 P26
-//typedef __packed struct //自定义控制器交互数据 0x0302 30Hz  最大30字节
-//{
-//		uint8_t data[];
-//} robot_interactive_data_t;
-
-//typedef __packed struct //表 5-8 客户端绘制字符 机器人间通信： 0x0301 裁判系统串口协议附录V1.4 P25
-//{
-//		graphic_data_struct_t grapic_data_struct;
-//		uint8_t data[30];
-//} ext_client_custom_character_t;
-
-// UI绘制 及发送的数据包 见UI相关.c .h文件
-
-/*
-很老的协议内容
-typedef __packed struct
+typedef __packed struct // 0x020C
 {
-    float data1;
-    float data2;
-    float data3;
-    uint8_t data4;
-} custom_data_t;
+	uint8_t mark_hero_progress;
+	uint8_t mark_engineer_progress;
+	uint8_t mark_standard_3_progress;
+	uint8_t mark_standard_4_progress;
+	uint8_t mark_standard_5_progress;
+	uint8_t mark_sentry_progress;
+}radar_mark_data_t;
 
-
-typedef __packed struct
+typedef __packed struct // 0x020D
 {
-    uint8_t data[64];
-} ext_up_stream_data_t;
+	uint32_t sentry_info;
+} sentry_info_t;
 
-typedef __packed struct
+typedef __packed struct // 0x020E
 {
-    uint8_t data[32];
-} ext_download_stream_data_t;
-*/
+	uint8_t radar_info;
+} radar_info_t; 
 
-// 7. 小地图交互信息
-/*客户端下发信息
-小地图下发信息标识： 0x0303。发送频率：触发时发送*/
-typedef __packed struct //0x0303
+typedef __packed struct // 0x0301
 {
-		float target_position_x;
-		float target_position_y;
-		float target_position_z;
-		uint8_t commd_keyboard;
-		uint16_t target_robot_ID;
-} ext_robot_command_t;
+ uint16_t data_cmd_id;
+ uint16_t sender_id;
+ uint16_t receiver_id;
+ uint8_t user_data[112];
+}robot_interaction_data_t; 
 
-/*客户端接收信息
-小地图接收信息标识： 0x0305。 最大接收频率： 10Hz*/
-typedef __packed struct
+typedef __packed struct // 0x0303
 {
-		uint16_t target_robot_ID;
-		float target_position_x;
-		float target_position_y;
-} ext_client_map_command_t;
+	float target_position_x;
+	float target_position_y;
+	uint8_t cmd_keyboard;
+	uint8_t target_robot_id;
+	uint8_t cmd_source;
+}map_command_t;
 
-//8. 图传遥控信息 图传遥控信息，是通过图传模块下发
-//图传遥控信息标识： 0x0304 30Hz P28
-typedef __packed struct
+typedef __packed struct // 0x0305
 {
-		int16_t mouse_x;
-		int16_t mouse_y;
-		int16_t mouse_z;
-		uint8_t left_button_down; //可能是int8_t
-		uint8_t right_button_down; //可能是int8_t
-		uint16_t keyboard_value;
-		uint16_t reserved;
-} ext_camRC_robot_command_t; //ext_robot_command_t同名
+	uint16_t target_robot_id;
+	float target_position_x;
+	float target_position_y;
+}map_robot_data_t; 
 
-/*
-上面的 7. 和 8. 暂时不使用 RMUL没有定位和小地图 图传遥控链路不使用
-*/
+typedef __packed struct // 0x0307
+{
+	uint8_t intention;
+	uint16_t start_position_x;
+	uint16_t start_position_y;
+	int8_t delta_x[49];
+	int8_t delta_y[49];
+	uint16_t sender_id; 
+}map_data_t; 
+
+typedef __packed struct // 0x0308
+{
+	uint16_t sender_id;
+	uint16_t receiver_id;
+	uint8_t user_data[30];
+} custom_info_t;
 
 extern void init_referee_struct_data(void);
 extern void referee_data_solve(uint8_t *frame);

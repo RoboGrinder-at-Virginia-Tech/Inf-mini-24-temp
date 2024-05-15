@@ -46,13 +46,23 @@ typedef enum
 	    the transmit is handled in UI task(or referee_interaction_task)
 		*/
 		
-		// TODO: 图传链路 等, video communication route, handled in referee rx task
+		// TODO: 图传链路 等, video communication route, handled in referee rx task by a different uart port
 		
-		// TODO: 0x0302 图传链路, 自定义控制器
+		// 0x0302 TODO: 图传链路, 自定义控制器
 		
 		MAP_COMMAND_CMD_ID								=	0x0303, // not used
 		
-		//TODO: 0x0304 图传链路, 键鼠
+		// 0x0304 TODO: 图传链路, 键鼠
+		
+		MAP_ROBOT_DATA_CMD_ID							=	0x0305, // not used
+		
+		CUSTOM_CLIENT_DATA_CMD_ID					= 0x0306, // N/A - reserved for 自定义控制器->选手端
+		// TODO: 自定义控制器由给ref发信息的线程处理
+		
+		MAP_DATA_CMD_ID										= 0x0307, // not used
+		
+		CUSTOM_INFO_CMD_ID								= 0x0308, // not used
+		
 		
 }referee_cmd_id_t;
 typedef  struct
