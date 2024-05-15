@@ -146,7 +146,7 @@ SZL 5-21-2022 重新算
 #define MAX_WHEEL_SPEED 8.0f 
 //chassis forward or back max speed
 //底盘运动过程最大前进速度
-#define NORMAL_MAX_CHASSIS_SPEED_X 5.0f
+#define NORMAL_MAX_CHASSIS_SPEED_X 3.0f //5.0f
 //PR 底盘线性油门
 #define TURBO_SPEED 3.5f //全油门模式速度
 #define TURBO_ACC_STEP 0.05f //油门步进（加速度控制）
@@ -155,7 +155,7 @@ SZL 5-21-2022 重新算
 #define SLOW_SPEED 1.7f	//5-24-2022之前 1.4f //低速 模式速度
 #define SLOW_ACC_STEP 0.015f //油门步进（加速度控制）
 #define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
-#define SPIN_SPEED 5.235987f //8.0f //12.56f //6.66f //5.0f //4.0f //3.3f 3.0f //小陀螺速度
+#define SPIN_SPEED 8.0f //12.56f //6.66f //5.0f //4.0f //3.3f 3.0f //小陀螺速度
 /*
 5.235987f-50rpm; 7.330382858f-70rpm; 8.0-76.39rpm; 8.3775-80rpm; 9.424777-90rpm;  10.47197f-100rpm
 12.56637-120rpm
@@ -181,7 +181,7 @@ SZL 5-21-2022 重新算
 /*原始参数: NORMAL_MAX_CHASSIS_SPEED_Y 3.0f; CHASSIS_WZ_SET_SCALE 0.1f*/
 //chassis left or right max speed
 //底盘运动过程最大平移速度
-#define NORMAL_MAX_CHASSIS_SPEED_Y 2.3f
+#define NORMAL_MAX_CHASSIS_SPEED_Y 1.25f //2.3f
 
 #define CHASSIS_WZ_SET_SCALE 0.1f
 
