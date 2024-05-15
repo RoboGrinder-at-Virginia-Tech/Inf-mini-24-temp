@@ -21,7 +21,7 @@
 #include "bsp_servo_pwm.h"
 #include "remote_control.h"
 #include "shoot.h"
-#include "client_ui_task.h"
+#include "referee_ui.h"
 
 
 extern ui_info_t ui_info;

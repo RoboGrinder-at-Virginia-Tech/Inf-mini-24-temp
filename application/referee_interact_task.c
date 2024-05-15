@@ -1,12 +1,12 @@
 /*************************************************************
 
-RM自定义UI协议       基于RM2020学生串口通信协议V1.3
+此任务负责向裁判系统发送信息
 
 弗吉尼亚理工 Virginia Tech; RoboGrinder
 
 **************************************************************/
 
-#include "client_ui_task.h"
+#include "referee_interact_task.h"
 #include "main.h"
 #include "cmsis_os.h"
 #include <stdio.h>

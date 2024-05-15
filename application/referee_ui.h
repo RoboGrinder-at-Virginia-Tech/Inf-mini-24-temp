@@ -11,7 +11,7 @@ frame_header(5-byte)+cmd_id(2-byte)+data(n-byte)+frame_tail(2-byte,CRC16,Õû°üĞ£Ñ
 #include "stm32f4xx.h"
 #include "stdarg.h"
 #include "usart.h"
-#include "client_ui_coordinate_info.h"
+#include "referee_ui_coordinate_info.h"
 #include "user_lib.h"
 #include "struct_typedef.h"
 #include "gimbal_task.h"
