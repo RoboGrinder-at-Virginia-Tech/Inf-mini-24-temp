@@ -22,6 +22,3 @@ RM自定义UI协议
 #include "user_lib.h"
 #include <string.h>
 
-#if INCLUDE_uxTaskGetStackHighWaterMark
-uint32_t client_ui_task_high_water;
-#endif
