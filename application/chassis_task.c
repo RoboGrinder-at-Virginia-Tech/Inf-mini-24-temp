@@ -18,7 +18,7 @@
   */
 #include "chassis_task.h"
 #include "chassis_behaviour.h"
-
+#include "gimbal_behaviour.h"
 #include "cmsis_os.h"
 
 #include "arm_math.h"
@@ -255,7 +255,8 @@ static void chassis_init(chassis_move_t *chassis_move_init)
 
     //in beginning， chassis mode is raw 
     //底盘开机状态为原始
-    chassis_move_init->chassis_mode = CHASSIS_VECTOR_RAW;
+    chassis_move_init->chassis_mode = CHASSIS_ZERO_FORCE;
+		chassis_move_init->chassis_vector_mode = CHASSIS_VECTOR_RAW;
     //get remote control point
     //获取遥控器指针
     chassis_move_init->chassis_RC = get_remote_control_point();
@@ -316,8 +317,62 @@ static void chassis_set_mode(chassis_move_t *chassis_move_mode)
     {
         return;
     }
-    //in file "chassis_behaviour.c"
-    chassis_behaviour_mode_set(chassis_move_mode);
+    
+		//remote control  set chassis behaviour mode
+    //遥控器设置模式 rc_data[TEMP].rc.switch_right
+		
+		// 右侧开关状态[下], 底盘云台设置为无力状态
+    if (switch_is_down(chassis_move_mode->chassis_RC[TEMP].rc.switch_right))
+		{
+			chassis_move_mode->chassis_mode = CHASSIS_ZERO_FORCE;
+			chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_RAW;
+		}
+    // 右侧开关状态[中], 底盘云台设置为跟随状态
+    else if (switch_is_mid(chassis_move_mode->chassis_RC[TEMP].rc.switch_right))
+    {
+			chassis_move_mode->chassis_mode = CHASSIS_NO_FOLLOW;
+			chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+    }
+		// 右侧开关状态[上], 底盘云台设置为跟随状态
+    else if (switch_is_up(chassis_move_mode->chassis_RC[TEMP].rc.switch_right))
+    {
+			// default as follow mode
+      chassis_move_mode->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
+      chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+
+      // 按F启动小陀螺 press F to start chassis spin
+      switch (chassis_move_mode->chassis_RC[TEMP].key[KEY_PRESS].f)
+      {
+				case 1:
+					chassis_move_mode->chassis_mode = CHASSIS_ROTATE;
+					chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+				break;
+
+        default:
+					// does nothings
+				break;
+			}
+			// 按G关闭小陀螺 press G to stop chassis spin
+			switch (chassis_move_mode->chassis_RC[TEMP].key[KEY_PRESS].g)
+			{
+				case 1:
+					chassis_move_mode->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
+					chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+				break;
+
+				default:
+						// does nothings
+						break;
+			}
+		}
+
+    //when gimbal in some mode, such as init mode, chassis must's move
+    //当云台在某些模式下，像初始化， 底盘不动
+    if (gimbal_cmd_to_chassis_stop())
+    {
+			chassis_move_mode->chassis_mode = CHASSIS_ZERO_FORCE;
+			chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_RAW;
+    }
 }
 
 /**

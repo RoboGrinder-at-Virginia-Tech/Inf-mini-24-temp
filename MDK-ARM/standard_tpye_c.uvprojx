@@ -649,6 +649,31 @@
               <FilePath>..\application\referee_usart_task.c</FilePath>
             </File>
             <File>
+              <FileName>referee_ui.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee_ui.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee_ui.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\referee_ui.h</FilePath>
+            </File>
+            <File>
+              <FileName>referee_ui_coordinate_info.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\referee_ui_coordinate_info.h</FilePath>
+            </File>
+            <File>
+              <FileName>referee_interact_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\referee_interact_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>referee_interact_task.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\referee_interact_task.h</FilePath>
+            </File>
+            <File>
               <FileName>remote_control.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\remote_control.c</FilePath>
@@ -692,21 +717,6 @@
               <FileName>SuperCap_comm.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\application\SuperCap_comm.h</FilePath>
-            </File>
-            <File>
-              <FileName>client_ui_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\client_ui_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>client_ui_task.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\application\client_ui_task.h</FilePath>
-            </File>
-            <File>
-              <FileName>client_ui_coordinate_info.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>..\application\client_ui_coordinate_info.h</FilePath>
             </File>
             <File>
               <FileName>miniPC_comm_task.c</FileName>
@@ -757,6 +767,16 @@
               <FileName>odometer_task.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\application\odometer_task.h</FilePath>
+            </File>
+            <File>
+              <FileName>robot_cmd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\application\robot_cmd.c</FilePath>
+            </File>
+            <File>
+              <FileName>robot_cmd.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\application\robot_cmd.h</FilePath>
             </File>
           </Files>
         </Group>

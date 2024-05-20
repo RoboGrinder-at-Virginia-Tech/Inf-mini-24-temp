@@ -218,15 +218,20 @@ SZL 5-21-更改
 
 typedef enum
 {
-  CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW,   //chassis will follow yaw gimbal motor relative angle.底盘会跟随云台相对角度
-  CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW,  //chassis will have yaw angle(chassis_yaw) close-looped control.底盘有底盘角度控制闭环
-	
-	CHASSIS_VECTOR_SPIN, // chassis spining function. 底盘小陀螺 不跟随云台朝向
-	
-  CHASSIS_VECTOR_NO_FOLLOW_YAW,       //chassis will have rotation speed control. 底盘有旋转速度控制
-  CHASSIS_VECTOR_RAW,                 //control-current will be sent to CAN bus derectly.
+    CHASSIS_ZERO_FORCE,										//底盘无力 CHASSIS_ZERO_FORCE
+    CHASSIS_NO_MOVE,                      //底盘保持不动
+    CHASSIS_OPEN,                         //遥控器的值乘以比例直接发送到can总线上
+    CHASSIS_NO_FOLLOW,         // 不跟随，允许全向平移
+    CHASSIS_FOLLOW_GIMBAL_YAW, // 跟随模式，底盘叠加角度环控制
+		CHASSIS_ROTATE,
 
 } chassis_mode_e;
+
+typedef enum
+{
+    CHASSIS_VECTOR_SPEED, 
+    CHASSIS_VECTOR_RAW, //数据未处理过，未加工
+} chassis_vector_mode_e;//底盘指令向量 数据类型
 
 typedef struct
 {
@@ -245,6 +250,8 @@ typedef struct
   const fp32 *chassis_INS_angle;             //the point to the euler angle of gyro sensor.获取陀螺仪解算出的欧拉角指针
   chassis_mode_e chassis_mode;               //state machine. 底盘控制状态机
   chassis_mode_e last_chassis_mode;          //last state machine.底盘上次控制状态机
+	chassis_vector_mode_e chassis_vector_mode;
+	chassis_vector_mode_e last_chassis_vector_mode;
   chassis_motor_t motor_chassis[4];          //chassis motor data.底盘电机数据
   pid_type_def motor_speed_pid[4];             //motor speed PID.底盘电机速度pid
   pid_type_def chassis_angle_pid;              //follow angle PID.底盘跟随角度pid
