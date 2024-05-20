@@ -75,7 +75,7 @@ static void trigger_motor_turn_back_17mm(void); //有绝对位置环退弹
   * @param[in]      void
   * @retval         void
   */
-static void shoot_bullet_control_absolute_17mm(void);
+static void shoot_bullet_control_absolute_17mm(uint8_t steps, fp32 trigger_speed_set);
 static void shoot_bullet_control_continuous_17mm(uint8_t shoot_freq);
 uint32_t shoot_heat_update_calculate(shoot_control_t* shoot_heat);
 
@@ -85,7 +85,7 @@ shoot_control_t shoot_control;          //射击数据
 int16_t temp_rpm_left;
 int16_t temp_rpm_right;
 
-fp32 temp_speed_setALL = 22; //23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
+fp32 temp_speed_setALL = 21.0f; //23; //14; //15 - 3.0; //11.5;//目前 ICRA Only 调试
 
 /**
   * @brief          射击初始化，初始化PID，遥控器指针，电机指针
@@ -167,6 +167,7 @@ void shoot_init(void)
 
 int16_t shoot_control_loop(void)
 {
+//	  shoot_laser_on(); //常开
 
     shoot_set_mode();        //设置状态机
     shoot_feedback_update(); //更新数据
@@ -212,16 +213,16 @@ int16_t shoot_control_loop(void)
 	 //shoot_control.referee_current_shooter_17mm_speed_limit = 18;//强制使其=18 用于调试-----------------------------------------------------------------------------------------------
 	 if(shoot_control.referee_current_shooter_17mm_speed_limit == 30)
 	 {
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(22.0f);//待定----------------------------
-		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(21.0f);//待定----------------------------
+		 shoot_control.predict_shoot_speed = 26.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 		 /*1) 发给ZYZ那 15.5 测出来14.5
 		   2) 发给ZYZ那 14.0 测出来 14.0
 		 */
 	 }
 	 else
 	 {//默认射速15
-		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(22.0f);//待定-----------------------------
-		 shoot_control.predict_shoot_speed = 28.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
+		 shoot_control.currentLIM_shoot_speed_17mm = (fp32)(21.0f);//待定-----------------------------
+		 shoot_control.predict_shoot_speed = 26.0f; //shoot_control.currentLIM_shoot_speed_17mm + 2;//待定
 	 }
 	 
 //	 else if(shoot_control.referee_current_shooter_17mm_speed_limit == 18)
@@ -236,7 +237,7 @@ int16_t shoot_control_loop(void)
 	 
 	 //弹速测试 12-28 ---- this section only for debug
 	 shoot_control.currentLIM_shoot_speed_17mm = (fp32)temp_speed_setALL;
-	 shoot_control.predict_shoot_speed = 28.0f;
+	 shoot_control.predict_shoot_speed = 26.0f;
 	 
     if (shoot_control.shoot_mode == SHOOT_STOP)
     {
@@ -273,7 +274,7 @@ int16_t shoot_control_loop(void)
     {
         shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;//-----------------------------------------
         shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
-        shoot_bullet_control_absolute_17mm();
+        shoot_bullet_control_absolute_17mm(1, 10.0f); // single shot
     }
     else if (shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
     {
@@ -305,6 +306,29 @@ int16_t shoot_control_loop(void)
 //					{
 //					}
 //				}
+    }
+		else if (shoot_control.shoot_mode == SHOOT_3_BULLET)
+    {
+        if (xTaskGetTickCount() - shoot_control.burst_start_time <= 200) //BURST_PERIOD
+        {
+//            if (shoot_control.burst_counter < 3)
+//            {
+//                shoot_bullet_control_absolute_17mm(3); // burst of 3 shots
+//                shoot_control.burst_counter += 3;
+//            }
+//            else
+//            {
+//                shoot_control.shoot_mode = SHOOT_READY_BULLET;
+//            }
+					shoot_control.trigger_motor_pid.max_out = TRIGGER_BULLET_PID_MAX_OUT;
+					shoot_control.trigger_motor_pid.max_iout = TRIGGER_BULLET_PID_MAX_IOUT;
+					shoot_bullet_control_absolute_17mm(2, 10.0f); // Burst of 3 shots
+          shoot_control.burst_counter += 2;
+        }
+        else
+        {
+            shoot_control.shoot_mode = SHOOT_READY_BULLET;
+        }
     }
     else if(shoot_control.shoot_mode == SHOOT_DONE)
     {
@@ -496,7 +520,10 @@ static void shoot_set_mode(void)
         //下拨一次或者鼠标按下一次，进入射击状态
         if ((switch_is_down(shoot_control.shoot_rc->rc.s[SHOOT_RC_MODE_CHANNEL]) && !switch_is_down(last_s)) || (shoot_control.press_l && shoot_control.last_press_l == 0))
         {
-            shoot_control.shoot_mode = SHOOT_BULLET;
+            //shoot_control.shoot_mode = SHOOT_BULLET;
+					  shoot_control.shoot_mode = SHOOT_3_BULLET;
+						shoot_control.burst_counter = 0;
+            shoot_control.burst_start_time = xTaskGetTickCount();
         }
 			}
     }
@@ -588,10 +615,16 @@ static void shoot_set_mode(void)
 			
 				if(shoot_control.user_fire_ctrl==user_SHOOT_SEMI)
 				{
-					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0))|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
-					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) )|| (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					
+					if ( (shoot_control.press_l_time == PRESS_LONG_TIME_L ) || (shoot_control.rc_s_time == RC_S_LONG_TIME) )
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
+					}
+					else if( ( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) )
+					{
+						shoot_control.shoot_mode = SHOOT_3_BULLET;
+						shoot_control.burst_counter = 0;
+            shoot_control.burst_start_time = xTaskGetTickCount();
 					}
 					else if(shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 					{
@@ -601,9 +634,15 @@ static void shoot_set_mode(void)
 				else if(shoot_control.user_fire_ctrl==user_SHOOT_AUTO)
 				{
 					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.press_l ))
-					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.press_l ))
+					if ( (shoot_control.press_l ) )
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
+					}
+					else if(( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ))
+					{
+						shoot_control.shoot_mode = SHOOT_3_BULLET;
+						shoot_control.burst_counter = 0;
+            shoot_control.burst_start_time = xTaskGetTickCount();
 					}
 					else if(shoot_control.shoot_mode == SHOOT_CONTINUE_BULLET)
 					{
@@ -612,7 +651,7 @@ static void shoot_set_mode(void)
 				}
 				else
 				{
-					//(((miniPC_info.shootCommand == 0xff) && (miniPC_info.autoAimFlag > 0)) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					// default case
 					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
@@ -935,7 +974,7 @@ static void trigger_motor_turn_back_17mm(void)
   * @param[in]      void
   * @retval         void
   */
-static void shoot_bullet_control_absolute_17mm(void)
+static void shoot_bullet_control_absolute_17mm(uint8_t steps, fp32 trigger_speed_set)
 {
 	  //每次拨动 120度 的角度
     if (shoot_control.move_flag == 0)
@@ -943,10 +982,10 @@ static void shoot_bullet_control_absolute_17mm(void)
 				/*一次只能执行一次发射任务, 第一次发射任务请求完成后, 还未完成时, 请求第二次->不会执行第二次发射
 				一次拨一个单位
         */
-				shoot_control.set_angle = (shoot_control.angle + PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
+				shoot_control.set_angle = (shoot_control.angle + steps * PI_TEN);//rad_format(shoot_control.angle + PI_TEN); shooter_rad_format
         shoot_control.move_flag = 1;
-			  shoot_control.total_bullets_fired++; //
-			  shoot_control.local_heat += ONE17mm_BULLET_HEAT_AMOUNT;
+			  shoot_control.total_bullets_fired += steps;
+			  shoot_control.local_heat += steps * ONE17mm_BULLET_HEAT_AMOUNT;
     }
 		
 		/*这段代码的测试是在NewINF v6.4.1 中测试的, 也就是不会出现:(发射机构断电时, shoot_mode状态机不会被置为发射相关状态)
@@ -965,7 +1004,7 @@ static void shoot_bullet_control_absolute_17mm(void)
 		//还剩余较小角度时, 算到达了
 		if(shoot_control.set_angle - shoot_control.angle > 0.05f) //(fabs(shoot_control.set_angle - shoot_control.angle) > 0.05f)
 		{
-				shoot_control.trigger_speed_set = TRIGGER_SPEED;
+				shoot_control.trigger_speed_set = trigger_speed_set; //TRIGGER_SPEED;
 				//用于需要直接速度控制时的控制速度这里是堵转后反转速度 TRIGGER_SPEED符号指明正常旋转方向
 				trigger_motor_turn_back_17mm();
 		}
