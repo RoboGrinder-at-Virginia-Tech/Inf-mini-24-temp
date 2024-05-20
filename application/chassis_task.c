@@ -44,77 +44,16 @@
         }                                                \
     }
 
-
-/**
-  * @brief          "chassis_move" valiable initialization, include pid initialization, remote control data point initialization, 3508 chassis motors
-  *                 data point initialization, gimbal motor data point initialization, and gyro sensor angle point initialization.
-  * @param[out]     chassis_move_init: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          初始化"chassis_move"变量，包括pid初始化， 遥控器指针初始化，3508底盘电机指针初始化，云台电机初始化，陀螺仪角度指针初始化
-  * @param[out]     chassis_move_init:"chassis_move"变量指针.
-  * @retval         none
-  */
 static void chassis_init(chassis_move_t *chassis_move_init);
 
-/**
-  * @brief          set chassis control mode, mainly call 'chassis_behaviour_mode_set' function
-  * @param[out]     chassis_move_mode: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          设置底盘控制模式，主要在'chassis_behaviour_mode_set'函数中改变
-  * @param[out]     chassis_move_mode:"chassis_move"变量指针.
-  * @retval         none
-  */
 static void chassis_set_mode(chassis_move_t *chassis_move_mode);
 
-/**
-  * @brief          when chassis mode change, some param should be changed, suan as chassis yaw_set should be now chassis yaw
-  * @param[out]     chassis_move_transit: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          底盘模式改变，有些参数需要改变，例如底盘控制yaw角度设定值应该变成当前底盘yaw角度
-  * @param[out]     chassis_move_transit:"chassis_move"变量指针.
-  * @retval         none
-  */
 void chassis_mode_change_control_transit(chassis_move_t *chassis_move_transit);
-/**
-  * @brief          chassis some measure data updata, such as motor speed, euler angle， robot speed
-  * @param[out]     chassis_move_update: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          底盘测量数据更新，包括电机速度，欧拉角度，机器人速度
-  * @param[out]     chassis_move_update:"chassis_move"变量指针.
-  * @retval         none
-  */
+
 static void chassis_feedback_update(chassis_move_t *chassis_move_update);
-/**
-  * @brief          set chassis control set-point, three movement control value is set by "chassis_behaviour_control_set".
-  *                 
-  * @param[out]     chassis_move_update: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          
-  * @param[out]     chassis_move_update:"chassis_move"变量指针.
-  * @retval         none
-  */
+
 static void chassis_set_contorl(chassis_move_t *chassis_move_control);
-/**
-  * @brief          control loop, according to control set-point, calculate motor current, 
-  *                 motor current will be sentto motor
-  * @param[out]     chassis_move_control_loop: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          控制循环，根据控制设定值，计算电机电流值，进行控制
-  * @param[out]     chassis_move_control_loop:"chassis_move"变量指针.
-  * @retval         none
-  */
+
 static void chassis_control_loop(chassis_move_t *chassis_move_control_loop);
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
@@ -126,11 +65,17 @@ uint32_t chassis_high_water;
 //底盘运动数据
 chassis_move_t chassis_move;
 
-//struct Debug_testing_only
-//{
-//	uint8_t a_1;
-//	uint8_t a_2;
-//}debug_anotherstr;
+static void chassis_motor_PID_reset()
+{		
+		uint8_t i=0;
+		for (i = 0; i < 4; i++)
+    {
+				chassis_move.motor_speed_pid[i].out = 0;
+				chassis_move.motor_speed_pid[i].Pout = 0;
+				chassis_move.motor_speed_pid[i].Iout = 0;
+				chassis_move.motor_speed_pid[i].Dout = 0;
+    }
+}
 
 /**
   * @brief          chassis task, osDelay CHASSIS_CONTROL_TIME_MS (2ms) 
@@ -399,19 +344,13 @@ static void chassis_mode_change_control_transit(chassis_move_t *chassis_move_tra
 
     //change to follow gimbal angle mode
     //切入跟随云台模式
-    if ((chassis_move_transit->last_chassis_mode != CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW) && chassis_move_transit->chassis_mode == CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW)
+    if ((chassis_move_transit->last_chassis_mode != CHASSIS_FOLLOW_GIMBAL_YAW) && chassis_move_transit->chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW)
     {
         chassis_move_transit->chassis_relative_angle_set = 0.0f;
     }
-    //change to follow chassis yaw angle
-    //切入跟随底盘角度模式
-    else if ((chassis_move_transit->last_chassis_mode != CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW) && chassis_move_transit->chassis_mode == CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW)
-    {
-        chassis_move_transit->chassis_yaw_set = chassis_move_transit->chassis_yaw;
-    }
     //change to no follow angle
     //切入不跟随云台模式
-    else if ((chassis_move_transit->last_chassis_mode != CHASSIS_VECTOR_NO_FOLLOW_YAW) && chassis_move_transit->chassis_mode == CHASSIS_VECTOR_NO_FOLLOW_YAW)
+    else if ((chassis_move_transit->last_chassis_mode != CHASSIS_NO_FOLLOW_YAW) && chassis_move_transit->chassis_mode == CHASSIS_NO_FOLLOW_YAW)
     {
         chassis_move_transit->chassis_yaw_set = chassis_move_transit->chassis_yaw;
     }
@@ -484,87 +423,25 @@ static void chassis_feedback_update(chassis_move_t *chassis_move_update)
   * @param[out]     chassis_move_rc_to_vector: "chassis_move" 变量指针
   * @retval         none
   */
-uint8_t turboMode = 0; //0常规模式  1加速模式
-void chassis_rc_to_control_vector(fp32 *vx_set, fp32 *vy_set, chassis_move_t *chassis_move_rc_to_vector)
+void DJI_rc_to_base_XY_control_vector(fp32 *vx_set, fp32 *vy_set, fp32 *vz_set, chassis_move_t *chassis_move_rc_to_vector)
 {
-    if (chassis_move_rc_to_vector == NULL || vx_set == NULL || vy_set == NULL)
+    if (chassis_move_rc_to_vector == NULL || vx_set == NULL || vy_set == NULL || vz_set == NULL)
     {
         return;
     }
     
-    int16_t vx_channel, vy_channel;
-    fp32 vx_set_channel, vy_set_channel;
+    int16_t vx_channel, vy_channel, wz_channel;
+    fp32 vx_set_channel, vy_set_channel, wz_set_channel;
     //deadline, because some remote control need be calibrated,  the value of rocker is not zero in middle place,
     //死区限制，因为遥控器可能存在差异 摇杆在中间，其值不为0
-    rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_X_CHANNEL], vx_channel, CHASSIS_RC_DEADLINE);
-    rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC->rc.ch[CHASSIS_Y_CHANNEL], vy_channel, CHASSIS_RC_DEADLINE);
+    rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC[TEMP].rc.rocker_r1, vx_channel, 10); //CHASSIS_RC_DEADLINE
+    rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC[TEMP].rc.rocker_r_, vy_channel, 10);
+		rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC[TEMP].rc.rocker_l_, wz_channel, 10);
 
+    //遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例 rocker value (max 660) change to speed (m/s)
     vx_set_channel = vx_channel * CHASSIS_VX_RC_SEN;
     vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
-
-    //keyboard set speed set-point
-    //键盘控制		
-		static fp32 linerThrottle_Front; //线性油门控制 前进
-		static fp32 linerThrottle_Back; // 线性油门控制 后退
-	  fp32 step; //油门步进(加速度)
-		//static uint8_t turboMode = 0; //0常规模式  1加速模式
-		fp32 target_speed; //目标速度
-		fp32 int_speed; 
-		
-		if(chassis_move_rc_to_vector->chassis_RC->key.v & KEY_PRESSED_OFFSET_SHIFT) //shift全油门
-		{
-		turboMode = 1;
-			
-		}else if(chassis_move_rc_to_vector->chassis_RC->key.v & KEY_PRESSED_OFFSET_CTRL)
-		{
-		turboMode = 0;
-		}
-	  
-		if(turboMode == 1){
-    	target_speed = TURBO_SPEED;
-			step = TURBO_ACC_STEP;
-		  int_speed = TURBO_INT_SPEED;
-		}else if(turboMode == 0){
-		  target_speed = SLOW_SPEED;
-			step = SLOW_ACC_STEP;
-		  int_speed = SLOW_INT_SPEED;
-		}
-		
-    if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_FRONT_KEY)
-    {
-			  linerThrottle_Front = linerThrottle_Front + step;
-  
-			   if(linerThrottle_Front >= target_speed)
-				 {
-				 linerThrottle_Front = target_speed;
-				 }
-				 vx_set_channel = linerThrottle_Front;
-			
-    }else{
-		  linerThrottle_Front = int_speed;
-		}
-    
-		if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_BACK_KEY)
-    {
-			
-			 linerThrottle_Back = linerThrottle_Back - step;
-			if(linerThrottle_Back <= -target_speed)
-				{
-				linerThrottle_Back = -target_speed;
-				}
-        vx_set_channel = linerThrottle_Back;
-    }else{
-		linerThrottle_Back = -int_speed;
-		}
-		//------------------------------------------------------------------------------------
-    if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_LEFT_KEY)
-    {
-        vy_set_channel = chassis_move_rc_to_vector->vy_max_speed;
-    }
-    else if (chassis_move_rc_to_vector->chassis_RC->key.v & CHASSIS_RIGHT_KEY)
-    {
-        vy_set_channel = chassis_move_rc_to_vector->vy_min_speed;
-    } 
+		wz_set_channel = wz_channel * -CHASSIS_WZ_RC_SEN;
 
     //first order low-pass replace ramp function, calculate chassis speed set-point to improve control performance
     //一阶低通滤波代替斜波作为底盘速度输入
@@ -584,6 +461,7 @@ void chassis_rc_to_control_vector(fp32 *vx_set, fp32 *vy_set, chassis_move_t *ch
 
     *vx_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vx.out;
     *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out;
+		*vz_set = wz_set_channel; // 没有低通滤波
 }
 /**
   * @brief          set chassis control set-point, three movement control value is set by "chassis_behaviour_control_set".
@@ -604,13 +482,56 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         return;
     }
 
-    fp32 vx_set = 0.0f, vy_set = 0.0f, angle_set = 0.0f;
-    //get three control set-point, 获取三个控制设置值
+    fp32 vx_set = 0.0f, vy_set = 0.0f, wz_set, angle_set = 0.0f;
+		fp32 rc_vx = 0.0f, rc_vy = 0.0f, rc_vz = 0.0f;
+		
+		// 从遥控器, 或键盘输入端, 获取vx, vy, wz等信息
+		DJI_rc_to_base_XY_control_vector(&rc_vx, &rc_vy, &rc_vz, chassis_move_control);
+		
+    //get three control set-point, 获取三个控制设置值 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
     chassis_behaviour_control_set(&vx_set, &vy_set, &angle_set, chassis_move_control);
+		
+		//
+		switch (chassis_move_control->chassis_mode)
+    {
+			case CHASSIS_ZERO_FORCE: //同时reset pid
+				vx_set=0.0f;
+        vy_set=0.0f;
+        wz_set=0.0f;
+				chassis_motor_PID_reset();
+      break;
+
+      case CHASSIS_NO_MOVE: 
+				vx_set=0.0f;
+        vy_set=0.0f;
+        wz_set=0.0f;
+      break;
+			
+			case CHASSIS_OPEN:
+				vx_set=0.0f;
+				vy_set=0.0f;
+				wz_set=0.0f;
+      break;
+			
+			case CHASSIS_MANUAL_CTRL_SPEED:
+      chassis_manual_control_mode(&vx_set, &vy_set, &wz_set, &chassis_move);
+      break;
+				
+			case CHASSIS_MANUAL_CTRL_SPEED_with_SQRT_COMP:
+			chassis_manual_control_mode_sqrt_comp(&vx_set, &vy_set, &wz_set, &chassis_move);
+			break;
+    
+      default://CHASSIS_NO_MOVE
+      vx_set=0.0f;
+      vy_set=0.0f;
+      wz_set=0.0f;
+      break;
+		}
+		//
 
     //follow gimbal mode
     //跟随云台模式
-    if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_FOLLOW_GIMBAL_YAW)
+    if (chassis_move_control->chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW)
     {
         fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
         //rotate chassis direction, make sure vertial direction follow gimbal 

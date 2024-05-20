@@ -295,24 +295,6 @@ typedef struct
   */
 extern void chassis_task(void const *pvParameters);
 
-/**
-  * @brief          accroding to the channel value of remote control, calculate chassis vertical and horizontal speed set-point
-  *                 
-  * @param[out]     vx_set: vertical speed set-point
-  * @param[out]     vy_set: horizontal speed set-point
-  * @param[out]     chassis_move_rc_to_vector: "chassis_move" valiable point
-  * @retval         none
-  */
-/**
-  * @brief          根据遥控器通道值，计算纵向和横移速度
-  *                 
-  * @param[out]     vx_set: 纵向速度指针
-  * @param[out]     vy_set: 横向速度指针
-  * @param[out]     chassis_move_rc_to_vector: "chassis_move" 变量指针
-  * @retval         none
-  */
-extern void chassis_rc_to_control_vector(fp32 *vx_set, fp32 *vy_set, chassis_move_t *chassis_move_rc_to_vector);
-
 /*SZL 1-25 add get chassis_move pointer*/
 extern const chassis_move_t *get_chassis_pointer(void);
 
