@@ -350,7 +350,7 @@ static void chassis_mode_change_control_transit(chassis_move_t *chassis_move_tra
     }
     //change to no follow angle
     //切入不跟随云台模式
-    else if ((chassis_move_transit->last_chassis_mode != CHASSIS_NO_FOLLOW_YAW) && chassis_move_transit->chassis_mode == CHASSIS_NO_FOLLOW_YAW)
+    else if ((chassis_move_transit->last_chassis_mode != CHASSIS_NO_FOLLOW) && chassis_move_transit->chassis_mode == CHASSIS_NO_FOLLOW)
     {
         chassis_move_transit->chassis_yaw_set = chassis_move_transit->chassis_yaw;
     }
@@ -482,64 +482,56 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         return;
     }
 
-    fp32 vx_set = 0.0f, vy_set = 0.0f, wz_set, angle_set = 0.0f;
-		fp32 rc_vx = 0.0f, rc_vy = 0.0f, rc_vz = 0.0f;
+    fp32 angle_set = 0.0f;
+		fp32 rc_x = 0.0f, rc_y = 0.0f, rc_z = 0.0f;
+		fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
 		
 		// 从遥控器, 或键盘输入端, 获取vx, vy, wz等信息
-		DJI_rc_to_base_XY_control_vector(&rc_vx, &rc_vy, &rc_vz, chassis_move_control);
+		DJI_rc_to_base_XY_control_vector(&rc_x, &rc_y, &rc_z, chassis_move_control);
 		
     //get three control set-point, 获取三个控制设置值 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-    chassis_behaviour_control_set(&vx_set, &vy_set, &angle_set, chassis_move_control);
+    //chassis_behaviour_control_set(&vx_set, &vy_set, &angle_set, chassis_move_control);
 		
 		//
 		switch (chassis_move_control->chassis_mode)
     {
 			case CHASSIS_ZERO_FORCE: //同时reset pid
-				vx_set=0.0f;
-        vy_set=0.0f;
-        wz_set=0.0f;
+				chassis_move_control->vx_set=0.0f;
+        chassis_move_control->vy_set=0.0f;
+        chassis_move_control->wz_set=0.0f;
 				chassis_motor_PID_reset();
       break;
 
       case CHASSIS_NO_MOVE: 
-				vx_set=0.0f;
-        vy_set=0.0f;
-        wz_set=0.0f;
+				chassis_move_control->vx_set=0.0f;
+        chassis_move_control->vy_set=0.0f;
+        chassis_move_control->wz_set=0.0f;
       break;
 			
 			case CHASSIS_OPEN:
-				vx_set=0.0f;
-				vy_set=0.0f;
-				wz_set=0.0f;
+				chassis_move_control->vx_set=0.0f;
+				chassis_move_control->vy_set=0.0f;
+				chassis_move_control->wz_set=0.0f;
+			  //open for testing motor movements
       break;
 			
-			case CHASSIS_MANUAL_CTRL_SPEED:
-      chassis_manual_control_mode(&vx_set, &vy_set, &wz_set, &chassis_move);
-      break;
-				
-			case CHASSIS_MANUAL_CTRL_SPEED_with_SQRT_COMP:
-			chassis_manual_control_mode_sqrt_comp(&vx_set, &vy_set, &wz_set, &chassis_move);
+			case CHASSIS_NO_FOLLOW:
+				//"angle_set" is rotation speed set-point
+        //“angle_set” 是旋转速度控制
+        chassis_move_control->wz_set = rc_z;
+        chassis_move_control->vx_set = fp32_constrain(rc_x, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
+        chassis_move_control->vy_set = fp32_constrain(rc_y, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
 			break;
-    
-      default://CHASSIS_NO_MOVE
-      vx_set=0.0f;
-      vy_set=0.0f;
-      wz_set=0.0f;
-      break;
-		}
-		//
-
-    //follow gimbal mode
-    //跟随云台模式
-    if (chassis_move_control->chassis_mode == CHASSIS_FOLLOW_GIMBAL_YAW)
-    {
-        fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
-        //rotate chassis direction, make sure vertial direction follow gimbal 
-        //旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
-        sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
-        cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
-        chassis_move_control->vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
-        chassis_move_control->vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+			
+			case CHASSIS_FOLLOW_GIMBAL_YAW:
+				//rotate chassis direction, make sure vertial direction follow gimbal 
+				//旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
+				sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				chassis_move_control->vx_set = cos_yaw * rc_x + sin_yaw * rc_y;
+				chassis_move_control->vy_set = -sin_yaw * rc_x + cos_yaw * rc_y;
+			
+				angle_set = 0.0f; // TODO: 后期可改成两个角度, 但这是变符号的PI角度, 需要改wz_set的符号
         //set control relative angle  set-point
         //设置控制相对云台角度
         chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
@@ -548,20 +540,16 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
 			
         chassis_move_control->wz_set = -PID_calc(&chassis_move_control->chassis_angle_pid, chassis_move_control->chassis_yaw_motor->relative_angle, chassis_move_control->chassis_relative_angle_set);
 	
-			  //speed limit
-        //速度限幅
-        chassis_move_control->vx_set = fp32_constrain(chassis_move_control->vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
-        chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
-    }
-		else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_SPIN)
-		{
-				fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
-        //rotate chassis direction, make sure vertial direction follow gimbal 
-        //旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
-        sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
-        cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
-        chassis_move_control->vx_set = cos_yaw * vx_set + sin_yaw * vy_set;
-        chassis_move_control->vy_set = -sin_yaw * vx_set + cos_yaw * vy_set;
+      break;
+				
+			case CHASSIS_ROTATE:
+				//rotate chassis direction, make sure vertial direction follow gimbal 
+				//旋转控制底盘速度方向，保证前进方向是云台方向，有利于运动平稳
+				sin_yaw = arm_sin_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				cos_yaw = arm_cos_f32(-chassis_move_control->chassis_yaw_motor->relative_angle);
+				chassis_move_control->vx_set = cos_yaw * rc_x + sin_yaw * rc_y;
+				chassis_move_control->vy_set = -sin_yaw * rc_x + cos_yaw * rc_y;
+			
         //set control relative angle  set-point
         //设置控制相对云台角度
         chassis_move_control->chassis_relative_angle_set = rad_format(angle_set);
@@ -570,44 +558,31 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         //小陀螺 模式下 设置旋转角速度
 				chassis_move_control->wz_set = SPIN_SPEED;
 		
+			break;
+    
+      default://CHASSIS_NO_MOVE
 
-			  //speed limit
-        //速度限幅
-        chassis_move_control->vx_set = fp32_constrain(chassis_move_control->vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
-        chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
+      break;
 		}
-    else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_FOLLOW_CHASSIS_YAW)
-    {
-        fp32 delat_angle = 0.0f;
-        //set chassis yaw angle set-point
-        //设置底盘控制的角度
-        chassis_move_control->chassis_yaw_set = rad_format(angle_set);
-        delat_angle = rad_format(chassis_move_control->chassis_yaw_set - chassis_move_control->chassis_yaw);
-        //calculate rotation speed
-        //计算旋转的角速度
-        chassis_move_control->wz_set = PID_calc(&chassis_move_control->chassis_angle_pid, 0.0f, delat_angle);
-        //speed limit
-        //速度限幅
-        chassis_move_control->vx_set = fp32_constrain(vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
-        chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
-    }
-    else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_NO_FOLLOW_YAW)
-    {
-        //"angle_set" is rotation speed set-point
-        //“angle_set” 是旋转速度控制
-        chassis_move_control->wz_set = angle_set;
-        chassis_move_control->vx_set = fp32_constrain(vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
-        chassis_move_control->vy_set = fp32_constrain(vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
-    }
+		//
+
+		if(chassis_move_control->chassis_vector_mode == CHASSIS_VECTOR_SPEED)
+		{
+			//speed limit
+      //速度限幅
+      chassis_move_control->vx_set = fp32_constrain(chassis_move_control->vx_set, chassis_move_control->vx_min_speed, chassis_move_control->vx_max_speed);
+      chassis_move_control->vy_set = fp32_constrain(chassis_move_control->vy_set, chassis_move_control->vy_min_speed, chassis_move_control->vy_max_speed);
+			chassis_move_control->wz_set = chassis_move_control->wz_set;
+		}
     else if (chassis_move_control->chassis_mode == CHASSIS_VECTOR_RAW)
     {
-        //in raw mode, set-point is sent to CAN bus
-        //在原始模式，设置值是发送到CAN总线
-        chassis_move_control->vx_set = vx_set;
-        chassis_move_control->vy_set = vy_set;
-        chassis_move_control->wz_set = angle_set;
-        chassis_move_control->chassis_cmd_slow_set_vx.out = 0.0f;
-        chassis_move_control->chassis_cmd_slow_set_vy.out = 0.0f;
+      //in raw mode, set-point is sent to CAN bus
+      //在原始模式，设置值是发送到CAN总线 - 无限幅
+			chassis_move_control->vx_set = chassis_move_control->vx_set;
+      chassis_move_control->vy_set = chassis_move_control->vy_set;
+			chassis_move_control->wz_set = chassis_move_control->wz_set;
+      chassis_move_control->chassis_cmd_slow_set_vx.out = 0.0f;
+      chassis_move_control->chassis_cmd_slow_set_vy.out = 0.0f;
     }
 }
 
@@ -738,10 +713,10 @@ const chassis_move_t *get_chassis_pointer(void)
 }
 
 /* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
-uint8_t get_turboMode()
-{
-	return turboMode;
-}
+//uint8_t get_turboMode()
+//{
+//	return turboMode;
+//}
 
 
 /* ---------- getter method end ---------- */
