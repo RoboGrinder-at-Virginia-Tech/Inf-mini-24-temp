@@ -91,11 +91,11 @@ void servo_task(void const * argument)
 //                servo_pwm[i] += PWM_DETAL_VALUE;
 //            }
 						
-						if(servo_rc->key[KEY_PRESS_WITH_CTRL].z)
+						if(servo_rc[TEMP].key[KEY_PRESS_WITH_CTRL].z)
             {
                 servo_pwm[i] -= PWM_DETAL_VALUE;
             }
-            else if(servo_rc->key[KEY_PRESS].z)
+            else if(servo_rc[TEMP].key[KEY_PRESS].z)
             {
                 servo_pwm[i] += PWM_DETAL_VALUE;
             }

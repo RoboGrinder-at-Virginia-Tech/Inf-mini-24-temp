@@ -227,8 +227,8 @@ void MX_FREERTOS_Init(void) {
 //    osThreadDef(SERVO, servo_task, osPriorityNormal, 0, 128);
 //    servo_task_handle = osThreadCreate(osThread(SERVO), NULL);
 		//10-21֮ǰosPriorityBelowNormal
-		osThreadDef(UI, client_ui_task, osPriorityNormal, 0, 512); //osPriorityBelowNormal osPriorityNormal
-		client_ui_task_handle =  osThreadCreate(osThread(UI), NULL);
+//		osThreadDef(UI, client_ui_task, osPriorityNormal, 0, 512); //osPriorityBelowNormal osPriorityNormal
+//		client_ui_task_handle =  osThreadCreate(osThread(UI), NULL);
   /* USER CODE END RTOS_THREADS */
 
 }

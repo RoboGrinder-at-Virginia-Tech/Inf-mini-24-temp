@@ -649,7 +649,7 @@ static void chassis_control_loop(chassis_move_t *chassis_move_control_loop)
     chassis_vector_to_mecanum_wheel_speed(chassis_move_control_loop->vx_set,
                                           chassis_move_control_loop->vy_set, chassis_move_control_loop->wz_set, wheel_speed);
 
-    if (chassis_move_control_loop->chassis_mode == CHASSIS_VECTOR_RAW)
+    if (chassis_move_control_loop->chassis_vector_mode == CHASSIS_VECTOR_RAW)
     {
         
         for (i = 0; i < 4; i++)
