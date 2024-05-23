@@ -99,6 +99,15 @@ void servo_task(void const * argument)
             {
                 servo_pwm[i] += PWM_DETAL_VALUE;
             }
+						
+						if(servo_rc[TEMP].key[KEY_PRESS_WITH_SHIFT].w)
+            {
+                servo_pwm[i] -= PWM_DETAL_VALUE;
+            }
+            else if(servo_rc[TEMP].key[KEY_PRESS_WITH_SHIFT].s)
+            {
+                servo_pwm[i] += PWM_DETAL_VALUE;
+            }
 
             //limit the pwm
            //ÏÞÖÆpwm
