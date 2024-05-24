@@ -486,6 +486,8 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
 		fp32 rc_x = 0.0f, rc_y = 0.0f, rc_z = 0.0f;
 		fp32 sin_yaw = 0.0f, cos_yaw = 0.0f;
 		
+		// 在这里判断底盘功率调控 chassis energy regulate
+		chassis_energy_regulate(chassis_move_control);
 		// 从遥控器, 或键盘输入端, 获取vx, vy, wz等信息
 		DJI_rc_to_base_XY_control_vector(&rc_x, &rc_y, &rc_z, chassis_move_control);
 		
