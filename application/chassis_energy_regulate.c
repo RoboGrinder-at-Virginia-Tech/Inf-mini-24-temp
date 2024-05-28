@@ -17,14 +17,91 @@
   @endverbatim
   ****************************(C) COPYRIGHT 2022 RoboGrinder at Virginia Tech****************************
   */
-#include "chassis_power_control.h"
+#include "chassis_energy_regulate.h"
 #include "referee.h"
 #include "arm_math.h"
+#include "cmsis_os.h"
+#include "user_lib.h"
 #include "detect_task.h"
 #include "SuperCap_comm.h"
+#include "chassis_task.h"
+
+#define RAD_PER_SEC_FROM_RPM(rpm) ( (float)(((float)rpm) * 2.0f * PI / 60.0f) ) // 将RPM转换为弧度每秒
 
 
 void chassis_energy_regulate(chassis_move_t *chassis_energy)
 {
+	if (chassis_energy == NULL) {
+		return;
+	}
 	
+	// 按键输入 初步设置底盘功率模式
+	uint32_t current_time = xTaskGetTickCount();
+	
+	switch (chassis_energy->chassis_RC[TEMP].key[KEY_PRESS].ctrl)
+	{
+		case 0:
+			if(chassis_energy->last_chassis_energy_mode == CHASSIS_CHARGE)
+			{
+				chassis_energy->chassis_energy_mode = CHASSIS_NORMAL;
+			}
+		break;
+
+		// 按下
+		case 1:
+			chassis_energy->chassis_energy_mode = CHASSIS_CHARGE;
+		break;
+
+		default:
+			// does nothings
+		break;
+	}
+	
+	switch (chassis_energy->chassis_RC[TEMP].key[KEY_PRESS].shift)
+	{
+		case 0:
+			if(chassis_energy->last_chassis_energy_mode == CHASSIS_BOOST && current_time - chassis_energy->shift_released_time >= 3000)
+			{
+				chassis_energy->chassis_energy_mode = CHASSIS_NORMAL;
+			}
+		break;
+		
+		case 1:
+			chassis_energy->chassis_energy_mode = CHASSIS_BOOST;
+			chassis_energy->shift_released_time = current_time;
+		break;
+
+		default:
+			// does nothings
+		break;
+	}
+	
+	chassis_energy->last_chassis_energy_mode = chassis_energy->chassis_energy_mode;
+	
+	// 按照最终确定的模式来判断小陀螺转速
+	switch (chassis_energy->chassis_energy_mode)
+	{
+		case CHASSIS_BOOST:
+			// 当有按键输入时, 降低小陀螺转速
+			if (fabs(chassis_energy->vx_set) > 0.01 || fabs(chassis_energy->vy_set) > 0.01)
+			{
+				chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+			} else {
+				chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(120); // 100
+			}
+		break;
+		
+		case CHASSIS_NORMAL:
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+		break;
+		
+		case CHASSIS_CHARGE:
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(50);
+		break;
+
+		default:
+			// as normal
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+		break;
+	}
 }

@@ -25,7 +25,7 @@
 #include "arm_math.h"
 #include "user_lib.h"
 #include "referee.h"
-
+#include "ramp_function.h"
 #include "CAN_receive.h"
 #include "gimbal_behaviour.h"
 #include "detect_task.h"

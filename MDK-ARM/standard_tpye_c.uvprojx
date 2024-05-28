@@ -769,14 +769,14 @@
               <FilePath>..\application\odometer_task.h</FilePath>
             </File>
             <File>
-              <FileName>robot_cmd.c</FileName>
+              <FileName>chassis_energy_regulate.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\application\robot_cmd.c</FilePath>
+              <FilePath>..\application\chassis_energy_regulate.c</FilePath>
             </File>
             <File>
-              <FileName>robot_cmd.h</FileName>
+              <FileName>chassis_energy_regulate.h</FileName>
               <FileType>5</FileType>
-              <FilePath>..\application\robot_cmd.h</FilePath>
+              <FilePath>..\application\chassis_energy_regulate.h</FilePath>
             </File>
           </Files>
         </Group>
@@ -852,6 +852,26 @@
               <FileName>kalman_filter.h</FileName>
               <FileType>5</FileType>
               <FilePath>..\components\algorithm\kalman_filter.h</FilePath>
+            </File>
+            <File>
+              <FileName>lowpass_filter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\lowpass_filter.c</FilePath>
+            </File>
+            <File>
+              <FileName>lowpass_filter.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\algorithm\lowpass_filter.h</FilePath>
+            </File>
+            <File>
+              <FileName>ramp_function.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\ramp_function.c</FilePath>
+            </File>
+            <File>
+              <FileName>ramp_function.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\algorithm\ramp_function.h</FilePath>
             </File>
           </Files>
         </Group>

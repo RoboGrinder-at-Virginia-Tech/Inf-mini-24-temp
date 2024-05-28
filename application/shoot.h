@@ -18,7 +18,7 @@
 #ifndef SHOOT_H
 #define SHOOT_H
 #include "struct_typedef.h"
-
+#include "ramp_function.h"
 #include "CAN_receive.h"
 #include "gimbal_task.h"
 #include "remote_control.h"

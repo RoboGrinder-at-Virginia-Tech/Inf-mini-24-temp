@@ -9,6 +9,7 @@
 #include "shoot.h"
 #include "odometer_task.h"
 #include "AHRS_middleware.h"
+#include "lowpass_filter.h"
 
 /*---------------------------------------------------- Raw Data Msg ----------------------------------------------------*/
 //robot_id_t is defined in referee.h file

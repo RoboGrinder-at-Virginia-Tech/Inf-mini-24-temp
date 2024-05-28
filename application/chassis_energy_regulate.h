@@ -27,5 +27,7 @@ typedef enum
 	CHASSIS_CHARGE,
 } chassis_energy_mode_e;
 
+struct chassis_move_t;
+extern void chassis_energy_regulate(struct chassis_move_t *chassis_energy);
 
 #endif

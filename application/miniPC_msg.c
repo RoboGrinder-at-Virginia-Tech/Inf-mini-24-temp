@@ -32,6 +32,7 @@
 #include "referee.h"
 #include "arm_math.h"
 #include "AHRS_MiddleWare.h"
+#include "lowpass_filter.h"
 
 extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 

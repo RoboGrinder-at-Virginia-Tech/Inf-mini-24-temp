@@ -24,6 +24,8 @@
 #include "pid.h"
 #include "remote_control.h"
 #include "user_lib.h"
+#include "chassis_energy_regulate.h"
+#include "lowpass_filter.h"
 
 //in the beginning of task ,wait a time
 //任务开始空闲一段时间
@@ -242,7 +244,7 @@ typedef struct
   int16_t give_current;
 } chassis_motor_t;
 
-typedef struct
+typedef struct chassis_move_t
 {
   const RC_ctrl_t *chassis_RC;               //底盘使用的遥控器指针, the point to remote control
   const gimbal_motor_t *chassis_yaw_motor;   //will use the relative angle of yaw gimbal motor to calculate the euler angle.底盘使用到yaw云台电机的相对角度来计算底盘的欧拉角.
@@ -252,6 +254,12 @@ typedef struct
   chassis_mode_e last_chassis_mode;          //last state machine.底盘上次控制状态机
 	chassis_vector_mode_e chassis_vector_mode;
 	chassis_vector_mode_e last_chassis_vector_mode;
+	
+	chassis_energy_mode_e chassis_energy_mode;
+	chassis_energy_mode_e last_chassis_energy_mode;
+	uint32_t shift_released_time;
+	fp32 spin_speed; // 小陀螺转速 in rad/s
+	
   chassis_motor_t motor_chassis[4];          //chassis motor data.底盘电机数据
   pid_type_def motor_speed_pid[4];             //motor speed PID.底盘电机速度pid
   pid_type_def chassis_angle_pid;              //follow angle PID.底盘跟随角度pid

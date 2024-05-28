@@ -20,7 +20,6 @@
 #include "chassis_behaviour.h"
 #include "gimbal_behaviour.h"
 #include "cmsis_os.h"
-
 #include "arm_math.h"
 #include "pid.h"
 #include "remote_control.h"
@@ -28,6 +27,8 @@
 #include "detect_task.h"
 #include "INS_task.h"
 #include "chassis_power_control.h"
+#include "chassis_energy_regulate.h"
+#include "lowpass_filter.h"
 
 //SZL 3-10-2022
 #include "SuperCap_comm.h"
@@ -202,6 +203,10 @@ static void chassis_init(chassis_move_t *chassis_move_init)
     //底盘开机状态为原始
     chassis_move_init->chassis_mode = CHASSIS_ZERO_FORCE;
 		chassis_move_init->chassis_vector_mode = CHASSIS_VECTOR_RAW;
+		
+		// 底盘能量模式为 NORMAL
+		chassis_move_init->chassis_energy_mode = CHASSIS_NORMAL;
+		
     //get remote control point
     //获取遥控器指针
     chassis_move_init->chassis_RC = get_remote_control_point();
@@ -281,9 +286,12 @@ static void chassis_set_mode(chassis_move_t *chassis_move_mode)
 		// 右侧开关状态[上], 底盘云台设置为跟随状态
     else if (switch_is_up(chassis_move_mode->chassis_RC[TEMP].rc.switch_right))
     {
-			// default as follow mode
-      chassis_move_mode->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
-      chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+			// 仅当 不是跟随且不是小陀螺时, 将底盘模式置为跟随
+			if (chassis_move_mode->last_chassis_mode != CHASSIS_ROTATE && chassis_move_mode->last_chassis_mode != CHASSIS_FOLLOW_GIMBAL_YAW)
+			{
+				chassis_move_mode->chassis_mode = CHASSIS_FOLLOW_GIMBAL_YAW;
+				chassis_move_mode->chassis_vector_mode = CHASSIS_VECTOR_SPEED;
+			}
 
       // 按F启动小陀螺 press F to start chassis spin
       switch (chassis_move_mode->chassis_RC[TEMP].key[KEY_PRESS].f)
@@ -297,6 +305,7 @@ static void chassis_set_mode(chassis_move_t *chassis_move_mode)
 					// does nothings
 				break;
 			}
+
 			// 按G关闭小陀螺 press G to stop chassis spin
 			switch (chassis_move_mode->chassis_RC[TEMP].key[KEY_PRESS].g)
 			{
@@ -306,8 +315,8 @@ static void chassis_set_mode(chassis_move_t *chassis_move_mode)
 				break;
 
 				default:
-						// does nothings
-						break;
+					// does nothings
+				break;
 			}
 		}
 
@@ -488,6 +497,9 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
 		
 		// 在这里判断底盘功率调控 chassis energy regulate
 		chassis_energy_regulate(chassis_move_control);
+		
+		// DJI_keyboard_to_base_XY_control_vector called with-in chassis_energy_regulate because it depends on chassis energy mode
+		
 		// 从遥控器, 或键盘输入端, 获取vx, vy, wz等信息
 		DJI_rc_to_base_XY_control_vector(&rc_x, &rc_y, &rc_z, chassis_move_control);
 		
@@ -558,7 +570,7 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
         
 			  //set ratation speed
         //小陀螺 模式下 设置旋转角速度
-				chassis_move_control->wz_set = SPIN_SPEED;
+				chassis_move_control->wz_set = chassis_move_control->spin_speed;
 		
 			break;
     
