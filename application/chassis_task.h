@@ -32,29 +32,12 @@
 //任务开始空闲一段时间
 #define CHASSIS_TASK_INIT_TIME 357
 
-//the channel num of controlling vertial speed 
-//前后的遥控器通道号码
-#define CHASSIS_X_CHANNEL 1
-//the channel num of controlling horizontal speed
-//左右的遥控器通道号码
-#define CHASSIS_Y_CHANNEL 0
-
-//in some mode, can use remote control to control rotation speed
-//在特殊模式下，可以通过遥控器控制旋转
-#define CHASSIS_WZ_CHANNEL 2
-
-//the channel of choosing chassis mode,
-//选择底盘状态 开关通道号
-#define CHASSIS_MODE_CHANNEL 0
 //rocker value (max 660) change to vertial speed (m/s) 
 //遥控器前进摇杆（max 660）转化成车体前进速度（m/s）的比例
 #define CHASSIS_VX_RC_SEN 0.006f
 //rocker value (max 660) change to horizontal speed (m/s)
 //遥控器左右摇杆（max 660）转化成车体左右速度（m/s）的比例
 #define CHASSIS_VY_RC_SEN 0.005f
-//in following yaw angle mode, rocker value add to angle 
-//跟随底盘yaw模式下，遥控器的yaw遥杆（max 660）增加到车体角度的比例
-#define CHASSIS_ANGLE_Z_RC_SEN 0.000002f
 //in not following yaw angle mode, rocker value change to rotation speed
 //不跟随云台的时候 遥控器的yaw遥杆（max 660）转化成车体旋转速度的比例
 #define CHASSIS_WZ_RC_SEN 0.01f
@@ -65,6 +48,8 @@
 //rocker value deadline
 //摇杆死区
 #define CHASSIS_RC_DEADLINE 10
+
+
 /* sin cos各个象限的45度 绝对值等于 omni wheel angle inverse kinematics coefficient-> / 0.707106781f
 	 还需要*1/4 -> = 0.25f / 0.707106781f *  = 0.176776695f
 							-> = 1.0f * 0.25f = 0.25f
@@ -118,15 +103,6 @@ MOTOR_DISTANCE_TO_CENTER是车轮到旋转中心的距离 = 0.211585f
 //chassis 3508 max motor control current
 //底盘3508最大can发送电流值 16384-->20A
 #define MAX_MOTOR_CAN_CURRENT 16000.0f
-//press the key, chassis will swing
-//底盘摇摆按键
-#define SWING_KEY KEY_PRESSED_OFFSET_CTRL
-//chassi forward, back, left, right key
-//底盘前后左右控制按键
-#define CHASSIS_FRONT_KEY KEY_PRESSED_OFFSET_W
-#define CHASSIS_BACK_KEY KEY_PRESSED_OFFSET_S
-#define CHASSIS_LEFT_KEY KEY_PRESSED_OFFSET_A
-#define CHASSIS_RIGHT_KEY KEY_PRESSED_OFFSET_D
 
 //m3508 rmp change to chassis speed,
 //m3508转化成底盘速度(m/s)的比例，
@@ -150,50 +126,29 @@ SZL 5-21-2022 重新算
 //chassis forward or back max speed
 //底盘运动过程最大前进速度
 #define NORMAL_MAX_CHASSIS_SPEED_X 3.0f //5.0f
-//PR 底盘线性油门
-#define TURBO_SPEED 3.5f //全油门模式速度
-#define TURBO_ACC_STEP 0.05f //油门步进（加速度控制）
-#define TURBO_INT_SPEED 0.18f //初始加速值（降低加速迟滞）
 
-#define SLOW_SPEED 1.7f	//5-24-2022之前 1.4f //低速 模式速度
-#define SLOW_ACC_STEP 0.015f //油门步进（加速度控制）
-#define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
 #define SPIN_SPEED 8.0f //12.56f //6.66f //5.0f //4.0f //3.3f 3.0f //小陀螺速度
 /*
 5.235987f-50rpm; 7.330382858f-70rpm; 8.0-76.39rpm; 8.3775-80rpm; 9.424777-90rpm;  10.47197f-100rpm
 12.56637-120rpm
 */
-/*
-7-4-2023: 基于之前测试:
-#define SPIN_SPEED 3.0f - 小陀螺时不会消耗太多功率
-#define SPIN_SPEED 4.8f - 快很多
--------------------------------------------
-原始的是: #define SPIN_SPEED 6.0f //小陀螺速度
-//PR 底盘线性油门
-#define TURBO_SPEED 2.8f //全油门模式速度
-#define TURBO_ACC_STEP 0.029f //油门步进（加速度控制）
-#define TURBO_INT_SPEED 0.2f //初始加速值（降低加速迟滞）
 
-#define SLOW_SPEED 1.4f //低速 模式速度
-#define SLOW_ACC_STEP 0.015f //油门步进（加速度控制）
-#define SLOW_INT_SPEED 0.1f //初始加速值（降低加速迟	滞）
-#define SPIN_SPEED 3.0f//6.0f //小陀螺速度
-*/
-//
-
-/*原始参数: NORMAL_MAX_CHASSIS_SPEED_Y 3.0f; CHASSIS_WZ_SET_SCALE 0.1f*/
+/*原始参数: NORMAL_MAX_CHASSIS_SPEED_Y 3.0f*/
 //chassis left or right max speed
 //底盘运动过程最大平移速度
 #define NORMAL_MAX_CHASSIS_SPEED_Y 1.25f //2.3f
 
-#define CHASSIS_WZ_SET_SCALE 0.1f
+#define LINEAR_THROTTLE_BOOST_TARGET_SPEED 3.5f
+#define LINEAR_THROTTLE_BOOST_STEP 0.05f
+#define LINEAR_THROTTLE_BOOST_INIT_SPEED 0.18f
 
-//when chassis is not set to move, swing max angle
-//摇摆原地不动摇摆最大角度(rad)
-#define SWING_NO_MOVE_ANGLE 0.7f
-//when chassis is set to move, swing max angle
-//摇摆过程底盘运动最大角度(rad)
-#define SWING_MOVE_ANGLE 0.31415926535897932384626433832795f
+#define LINEAR_THROTTLE_NORMAL_TARGET_SPEED 1.7f
+#define LINEAR_THROTTLE_NORMAL_STEP 0.015f
+#define LINEAR_THROTTLE_NORMAL_INIT_SPEED 0.1f
+
+#define LINEAR_THROTTLE_CHARGE_TARGET_SPEED 1.7f
+#define LINEAR_THROTTLE_CHARGE_STEP 0.015f
+#define LINEAR_THROTTLE_CHARGE_INIT_SPEED 0.1f
 
 //chassis motor speed PID
 //底盘电机速度环PID
@@ -213,7 +168,7 @@ SZL 5-21-更改
 */
 //chassis follow angle PID
 //底盘旋转跟随PID	
-#define CHASSIS_FOLLOW_GIMBAL_PID_KP 5.5f//6.0f //40.0f  //Pr
+#define CHASSIS_FOLLOW_GIMBAL_PID_KP 5.5f
 #define CHASSIS_FOLLOW_GIMBAL_PID_KI 0.0f
 #define CHASSIS_FOLLOW_GIMBAL_PID_KD 0.0f
 #define CHASSIS_FOLLOW_GIMBAL_PID_MAX_OUT 10.0f

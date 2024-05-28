@@ -234,8 +234,8 @@ static void chassis_init(chassis_move_t *chassis_move_init)
     first_order_filter_init(&chassis_move_init->chassis_cmd_slow_set_vy, CHASSIS_CONTROL_TIME, chassis_y_order_filter);
 		
 		// 键盘用线性油门而不是低通滤波
-		linear_throttle_init(&chassis_move_init->linear_throttle_vx, CHASSIS_CONTROL_TIME, 1.7f, 0.1f);
-		linear_throttle_init(&chassis_move_init->linear_throttle_vy, CHASSIS_CONTROL_TIME, 1.7f, 0.1f);
+		linear_throttle_init(&chassis_move_init->linear_throttle_vx, CHASSIS_CONTROL_TIME, LINEAR_THROTTLE_NORMAL_TARGET_SPEED, LINEAR_THROTTLE_NORMAL_INIT_SPEED);
+		linear_throttle_init(&chassis_move_init->linear_throttle_vy, CHASSIS_CONTROL_TIME, LINEAR_THROTTLE_NORMAL_TARGET_SPEED, LINEAR_THROTTLE_NORMAL_INIT_SPEED);
 
     //max and min speed
     //最大 最小速度
