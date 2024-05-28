@@ -8,7 +8,7 @@
 
 typedef struct
 {
-	fp32 abs_step;        // 输入数据 每秒希望增长数值 - 油门步进
+	fp32 step;        // 输入数据 每秒希望增长数值 - 油门步进
 	fp32 abs_init;				// 限幅最小值, 降低加速迟滞 - 初始加速值
   fp32 abs_target;      // 限幅最大值, 最终速度 - 全油门速度
 	
@@ -19,9 +19,9 @@ typedef struct
 } linear_throttle_t;
 
 //斜波函数初始化
-extern void ramp_init(ramp_function_source_t *ramp_source_type, fp32 frame_period, fp32 max, fp32 min);
+extern void linear_throttle_init(linear_throttle_t *linear_throttle, fp32 frame_period, fp32 abs_target, fp32 abs_init);
 
 //斜波函数计算
-extern void ramp_calc(ramp_function_source_t *ramp_source_type, fp32 input);
+extern void linear_throttle_calc(linear_throttle_t *linear_throttle, fp32 step);
 
 #endif

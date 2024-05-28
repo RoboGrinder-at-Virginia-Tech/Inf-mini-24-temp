@@ -26,6 +26,7 @@
 #include "user_lib.h"
 #include "chassis_energy_regulate.h"
 #include "lowpass_filter.h"
+#include "linear_throttle.h"
 
 //in the beginning of task ,wait a time
 //任务开始空闲一段时间
@@ -257,7 +258,9 @@ typedef struct chassis_move_t
 	
 	chassis_energy_mode_e chassis_energy_mode;
 	chassis_energy_mode_e last_chassis_energy_mode;
-	uint32_t shift_released_time;
+	uint32_t shift_pressed_timestamp; // 未按下shift时的时间戳
+	uint32_t in_place_timestamp; // 底盘固定不动时更新的时间戳, 按照指令而不是反馈来判断 in place 原地
+	uint32_t moving_timestamp; // 底盘移动时更新的时间戳, 按照指令而不是反馈来判断 移动
 	fp32 spin_speed; // 小陀螺转速 in rad/s
 	
   chassis_motor_t motor_chassis[4];          //chassis motor data.底盘电机数据
@@ -266,6 +269,9 @@ typedef struct chassis_move_t
 
   first_order_filter_type_t chassis_cmd_slow_set_vx;  //use first order filter to slow set-point.使用一阶低通滤波减缓设定值
   first_order_filter_type_t chassis_cmd_slow_set_vy;  //use first order filter to slow set-point.使用一阶低通滤波减缓设定值
+	
+	linear_throttle_t linear_throttle_vx; // 线性油门
+	linear_throttle_t linear_throttle_vy;
 
   fp32 vx;                          //chassis vertical speed, positive means forward,unit m/s. 底盘速度 前进方向 前为正，单位 m/s
   fp32 vy;                          //chassis horizontal speed, positive means letf,unit m/s.底盘速度 左右方向 左为正  单位 m/s

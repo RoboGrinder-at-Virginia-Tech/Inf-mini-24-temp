@@ -29,8 +29,7 @@
 #include "chassis_power_control.h"
 #include "chassis_energy_regulate.h"
 #include "lowpass_filter.h"
-
-//SZL 3-10-2022
+#include "linear_throttle.h"
 #include "SuperCap_comm.h"
 
 #define rc_deadband_limit(input, output, dealine)        \
@@ -233,6 +232,10 @@ static void chassis_init(chassis_move_t *chassis_move_init)
     //用一阶滤波代替斜波函数生成
     first_order_filter_init(&chassis_move_init->chassis_cmd_slow_set_vx, CHASSIS_CONTROL_TIME, chassis_x_order_filter);
     first_order_filter_init(&chassis_move_init->chassis_cmd_slow_set_vy, CHASSIS_CONTROL_TIME, chassis_y_order_filter);
+		
+		// 键盘用线性油门而不是低通滤波
+		linear_throttle_init(&chassis_move_init->linear_throttle_vx, CHASSIS_CONTROL_TIME, 1.7f, 0.1f);
+		linear_throttle_init(&chassis_move_init->linear_throttle_vy, CHASSIS_CONTROL_TIME, 1.7f, 0.1f);
 
     //max and min speed
     //最大 最小速度

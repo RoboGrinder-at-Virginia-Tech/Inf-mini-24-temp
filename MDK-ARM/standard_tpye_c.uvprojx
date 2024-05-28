@@ -873,6 +873,16 @@
               <FileType>5</FileType>
               <FilePath>..\components\algorithm\ramp_function.h</FilePath>
             </File>
+            <File>
+              <FileName>linear_throttle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\components\algorithm\linear_throttle.c</FilePath>
+            </File>
+            <File>
+              <FileName>linear_throttle.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>..\components\algorithm\linear_throttle.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
