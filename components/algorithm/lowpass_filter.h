@@ -14,6 +14,8 @@ typedef struct
     fp32 frame_period; //滤波的时间间隔 单位 s
 } first_order_filter_type_t;
 
+#pragma pack()
+
 //一阶滤波初始化
 extern void first_order_filter_init(first_order_filter_type_t *first_order_filter_type, fp32 frame_period, const fp32 num[1]);
 //一阶滤波计算

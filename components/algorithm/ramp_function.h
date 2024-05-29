@@ -16,6 +16,8 @@ typedef struct
     fp32 frame_period; //时间间隔
 } ramp_function_source_t;
 
+#pragma pack()
+
 //斜波函数初始化
 extern void ramp_init(ramp_function_source_t *ramp_source_type, fp32 frame_period, fp32 max, fp32 min);
 

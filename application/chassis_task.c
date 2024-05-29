@@ -443,7 +443,9 @@ void DJI_rc_to_base_XY_control_vector(fp32 *vx_set, fp32 *vy_set, fp32 *vz_set, 
     }
     
     int16_t vx_channel, vy_channel, wz_channel;
-    fp32 vx_set_channel, vy_set_channel, wz_set_channel;
+    fp32 vx_set_channel, vy_set_channel, wz_set_channel; //遥控器摇杆通道
+		fp32 vx_set_key, vy_set_key;
+		fp32 vx_set_step, vy_set_step;
     //deadline, because some remote control need be calibrated,  the value of rocker is not zero in middle place,
     //死区限制，因为遥控器可能存在差异 摇杆在中间，其值不为0
     rc_deadband_limit(chassis_move_rc_to_vector->chassis_RC[TEMP].rc.rocker_r1, vx_channel, 10); //CHASSIS_RC_DEADLINE
@@ -454,9 +456,126 @@ void DJI_rc_to_base_XY_control_vector(fp32 *vx_set, fp32 *vy_set, fp32 *vz_set, 
     vx_set_channel = vx_channel * CHASSIS_VX_RC_SEN;
     vy_set_channel = vy_channel * -CHASSIS_VY_RC_SEN;
 		wz_set_channel = wz_channel * -CHASSIS_WZ_RC_SEN;
+		
+		// 开始处理按键的线性油门
+		
+		// 由底盆能量模式确定当前线性油门参数
+		switch (chassis_move_rc_to_vector->chassis_energy_mode)
+		{
+			case CHASSIS_BOOST:
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_target = LINEAR_THROTTLE_BOOST_TARGET_SPEED;
+				vx_set_step = LINEAR_THROTTLE_BOOST_STEP;
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_init = LINEAR_THROTTLE_BOOST_INIT_SPEED;
+			break;
+			
+			case CHASSIS_NORMAL:
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_target = LINEAR_THROTTLE_NORMAL_TARGET_SPEED;
+				vx_set_step = LINEAR_THROTTLE_NORMAL_STEP;
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_init = LINEAR_THROTTLE_NORMAL_INIT_SPEED;
+			break;
+			
+			case CHASSIS_CHARGE:
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_target = LINEAR_THROTTLE_NORMAL_TARGET_SPEED;
+				vx_set_step = LINEAR_THROTTLE_NORMAL_STEP;
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_init = LINEAR_THROTTLE_NORMAL_INIT_SPEED;
+			break;
+
+			default:
+				// as normal
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_target = LINEAR_THROTTLE_NORMAL_TARGET_SPEED;
+				vx_set_step = LINEAR_THROTTLE_NORMAL_STEP;
+				chassis_move_rc_to_vector->linear_throttle_vx.abs_init = LINEAR_THROTTLE_NORMAL_INIT_SPEED;
+			break;
+		}
+		// vy 始终为normal模式
+		chassis_move_rc_to_vector->linear_throttle_vy.abs_target = LINEAR_THROTTLE_NORMAL_TARGET_SPEED;
+		vy_set_step = LINEAR_THROTTLE_NORMAL_STEP;
+		chassis_move_rc_to_vector->linear_throttle_vy.abs_init = LINEAR_THROTTLE_NORMAL_INIT_SPEED;
+		
+		// 先处理 x 方向 线性油门
+		switch (chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].w)
+		{
+			case 0:
+			  if(!chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].s)
+				{
+					linear_throttle_clear_out(&chassis_move_rc_to_vector->linear_throttle_vx);
+					vx_set_key = 0.0f;
+				}
+			break;
+			
+			case 1:
+				linear_throttle_calc(&chassis_move_rc_to_vector->linear_throttle_vx, vx_set_step);
+			  vx_set_key = chassis_move_rc_to_vector->linear_throttle_vx.out;
+			break;
+
+			default:
+				// does nothings
+			break;
+		}
+		switch (chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].s)
+		{
+			case 0:
+				if(!chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].w)
+				{
+					linear_throttle_clear_out(&chassis_move_rc_to_vector->linear_throttle_vx);
+					vx_set_key = 0.0f;
+				}
+			break;
+			
+			case 1:
+				linear_throttle_calc(&chassis_move_rc_to_vector->linear_throttle_vx, -vx_set_step);
+			  vx_set_key = chassis_move_rc_to_vector->linear_throttle_vx.out;
+			break;
+
+			default:
+				// does nothings
+			break;
+		}
+		
+		// 再处理 y 方向 线性油门
+		switch (chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].a)
+		{
+			case 0:
+				if(!chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].d)
+				{
+					linear_throttle_clear_out(&chassis_move_rc_to_vector->linear_throttle_vy);
+					vy_set_key = 0.0f;
+				}
+			break;
+			
+			case 1:
+				linear_throttle_calc(&chassis_move_rc_to_vector->linear_throttle_vy, vy_set_step);
+			  vy_set_key = chassis_move_rc_to_vector->linear_throttle_vy.out;
+			break;
+
+			default:
+				// does nothings
+			break;
+		}
+		switch (chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].d)
+		{
+			case 0:
+				if(!chassis_move_rc_to_vector->chassis_RC[TEMP].key[KEY_PRESS].a)
+				{
+					linear_throttle_clear_out(&chassis_move_rc_to_vector->linear_throttle_vy);
+					vy_set_key = 0.0f;
+				}
+			break;
+			
+			case 1:
+				linear_throttle_calc(&chassis_move_rc_to_vector->linear_throttle_vy, -vy_set_step);
+			  vy_set_key = chassis_move_rc_to_vector->linear_throttle_vy.out;
+			break;
+
+			default:
+				// does nothings
+			break;
+		}
+		
+		// 注意 目前的 vx_set_key vy_set_key 并未二次的去过低通滤波, 而是直接叠加再杆量上的
 
     //first order low-pass replace ramp function, calculate chassis speed set-point to improve control performance
-    //一阶低通滤波代替斜波作为底盘速度输入
+    //一阶低通滤波代替斜波作为底盘速度输入 only apply to X and Y
     first_order_filter_cali(&chassis_move_rc_to_vector->chassis_cmd_slow_set_vx, vx_set_channel);
     first_order_filter_cali(&chassis_move_rc_to_vector->chassis_cmd_slow_set_vy, vy_set_channel);
     //stop command, need not slow change, set zero derectly
@@ -471,8 +590,8 @@ void DJI_rc_to_base_XY_control_vector(fp32 *vx_set, fp32 *vy_set, fp32 *vz_set, 
         chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out = 0.0f;
     }
 
-    *vx_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vx.out;
-    *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out;
+    *vx_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vx.out + vx_set_key;
+    *vy_set = chassis_move_rc_to_vector->chassis_cmd_slow_set_vy.out + vy_set_key;
 		*vz_set = wz_set_channel; // 没有低通滤波
 }
 /**
@@ -500,8 +619,6 @@ static void chassis_set_contorl(chassis_move_t *chassis_move_control)
 		
 		// 在这里判断底盘功率调控 chassis energy regulate
 		chassis_energy_regulate(chassis_move_control);
-		
-		// DJI_keyboard_to_base_XY_control_vector called with-in chassis_energy_regulate because it depends on chassis energy mode
 		
 		// 从遥控器, 或键盘输入端, 获取vx, vy, wz等信息
 		DJI_rc_to_base_XY_control_vector(&rc_x, &rc_y, &rc_z, chassis_move_control);

@@ -18,10 +18,14 @@ typedef struct
 	
 } linear_throttle_t;
 
+#pragma pack()
+
 //斜波函数初始化
 extern void linear_throttle_init(linear_throttle_t *linear_throttle, fp32 frame_period, fp32 abs_target, fp32 abs_init);
 
 //斜波函数计算
 extern void linear_throttle_calc(linear_throttle_t *linear_throttle, fp32 step);
+
+extern void linear_throttle_clear_out(linear_throttle_t *linear_throttle);
 
 #endif

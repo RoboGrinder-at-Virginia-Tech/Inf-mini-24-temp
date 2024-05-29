@@ -85,3 +85,8 @@ void linear_throttle_calc(linear_throttle_t *linear_throttle, fp32 step)
 		linear_throttle->out = fp32_constrain(linear_throttle->out, -linear_throttle->abs_target,  -linear_throttle->abs_init);
 	}
 }
+
+void linear_throttle_clear_out(linear_throttle_t *linear_throttle)
+{
+    linear_throttle->out = 0.0f;
+}
