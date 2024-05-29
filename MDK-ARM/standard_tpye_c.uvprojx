@@ -609,11 +609,6 @@
               <FilePath>..\application\chassis_task.c</FilePath>
             </File>
             <File>
-              <FileName>chassis_behaviour.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\application\chassis_behaviour.c</FilePath>
-            </File>
-            <File>
               <FileName>detect_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\application\detect_task.c</FilePath>
