@@ -561,6 +561,11 @@ uint16_t cpc_get_superCap_charge_pwr() //仅功率控制使用
 	}
 }
 
+fp32 cpc_get_gen3Cap_Pmax()
+{
+	return gen3Cap_info.Pmax_f;
+}
+
 // 给 chassis energy regulate 的函数
 fp32 cer_get_current_cap_boost_mode_pct_threshold()
 {

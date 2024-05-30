@@ -281,6 +281,228 @@ void superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power
 
 }
 
+void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
+{
+	//fp32 current_scale;
+
+	direct_connect_e_cont.robot_id = get_robot_id();
+
+	/*---更新一下需要用到的 动态变动的数据---*/
+	direct_connect_e_cont.chassis_power_limit = get_chassis_power_limit();
+	if(direct_connect_e_cont.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) //( (direct_connect_e_cont.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) || (direct_connect_e_cont.chassis_power_limit <0) )
+	{//识别 并处理 不合理数值
+		direct_connect_e_cont.chassis_power_limit = 50;
+	}
+	
+	//从裁判系统获取当前缓冲能量
+	get_chassis_power_and_buffer(&direct_connect_e_cont.chassis_power, &direct_connect_e_cont.chassis_power_buffer);
+	
+	//识别 并处理 chassis_power 和 chassis_power_buffer 不合理数值；--- SZL: 暂时不处理 ---
+	
+	//judge output cut-off point based on remaining energy and set the buffer ene critical val point
+	/* ENERGY_BUFF_OUTPUT_CUTOFF_POINT = 3, 6; MINIMUM_ENERGY_BUFF=10, 13*/
+	if(direct_connect_e_cont.chassis_power_buffer <= ENERGY_BUFF_OUTPUT_CUTOFF_POINT)
+	{//一定产生cut off条件
+		direct_connect_e_cont.critical_power_buffer = MINIMUM_ENERGY_BUFF;
+	}
+	else if(direct_connect_e_cont.chassis_power_buffer >= MINIMUM_ENERGY_BUFF)
+	{//一定关闭cut off条件
+		direct_connect_e_cont.critical_power_buffer = ENERGY_BUFF_OUTPUT_CUTOFF_POINT;
+	}
+	else
+	{// default sts
+		direct_connect_e_cont.critical_power_buffer = ENERGY_BUFF_OUTPUT_CUTOFF_POINT;
+	}
+	
+	// 按照gen3 超级电容反馈的当前最大能补足的功率上限
+	fp32 gen3cap_Pmax = fp32_constrain(cpc_get_gen3Cap_Pmax(), 
+	
+	//分层 根据裁判系统缓冲能量 计算当前可用功率上限
+	if(direct_connect_e_cont.chassis_power_buffer >= WARNING_ENERGY_BUFF)
+	{//功率限制
+//			direct_connect_e_cont.p_max = (fp32)(direct_connect_e_cont.chassis_power_buffer - MINIMUM_ENERGY_BUFF) / CHASSIS_REFEREE_COMM_TIME;
+		direct_connect_e_cont.p_max = MAX_POWER_VALUE;
+		
+		direct_connect_e_cont.p_max = fp32_constrain(direct_connect_e_cont.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, MAX_POWER_VALUE);//最大功率的 限制
+		//convert p_max to total_current_limit for esc raw values
+		direct_connect_e_cont.total_current_limit = (fp32)direct_connect_e_cont.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+	}
+	else if(direct_connect_e_cont.chassis_power_buffer > MINIMUM_ENERGY_BUFF && direct_connect_e_cont.chassis_power_buffer < WARNING_ENERGY_BUFF)
+	{//直接电流限制; 这样比较方便; 减缓
+		fp32 power_scale = direct_connect_e_cont.chassis_power_buffer / WARNING_ENERGY_BUFF;
+//			update_energy_buffer_debuff_total_current_limit(direct_connect_e_cont.chassis_power_limit, &direct_connect_e_cont.buffer_debuff_total_current_limit);
+//			direct_connect_e_cont.total_current_limit = direct_connect_e_cont.buffer_debuff_total_current_limit * power_scale;
+		direct_connect_e_cont.total_current_limit = 16000.0f * power_scale;
+		
+		//反着更新 p_max
+		direct_connect_e_cont.p_max = direct_connect_e_cont.total_current_limit / 1000.0f * 24.0f;
+	}
+	else
+	{//功率限制
+		//缓冲能量达到或者小于危险值了, 保证当前底盘输出功率 小于等于 裁判系统的功率上限
+		direct_connect_e_cont.p_max = (fp32)direct_connect_e_cont.chassis_power_limit;//-8.0f;
+		
+		direct_connect_e_cont.p_max = fp32_constrain(direct_connect_e_cont.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, MAX_POWER_VALUE);//最大功率的 限制
+		//convert p_max to total_current_limit for esc raw values
+		direct_connect_e_cont.total_current_limit = (fp32)direct_connect_e_cont.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+	}
+	
+//		//在这里实现 最大功率的 限制
+//		if(fabs(direct_connect_e_cont.p_max) > MAX_POWER_VALUE)
+//		{
+//			direct_connect_e_cont.p_max = MAX_POWER_VALUE;
+//		}
+	
+	/*---完成 动态变动的数据 的更新---*/
+	
+	/*先处理 裁判系统离线的情况---就只限制输出功率*/
+	if(toe_is_error(REFEREE_TOE))
+	{
+		//就按找一个功率来限制就行了; 设备离线; 特殊情况下 的数据更新
+		direct_connect_e_cont.p_max = REFEREE_OFFLINE_POWER_LIM_VAL;
+		direct_connect_e_cont.p_max = fp32_constrain(direct_connect_e_cont.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, REFEREE_OFFLINE_POWER_LIM_VAL);
+		direct_connect_e_cont.total_current_limit = (fp32)direct_connect_e_cont.p_max / 24.0f * 1000.0f;
+		
+		//calculate pid
+		/*调试时发现的一个现象: PID算法; set=0; fdb=0; error=0; 由于I项, Iout=922; out=530.809
+			即total_current=1500~3000时 底盘 极低功率; 
+			测试数据: 裁判系统离线时如果 p_max = 100 -> total_current_limit=2083.3; total_current = 3630.90; 操作界面显示的chassis_power = 3.5w;
+		
+			(已用 分段常数控制器 解决)把机器人架起来, 摇杆向前推, 轮子向前空转到最大速度后; PID set 接近 fdb; 使得 out不高
+			即低total_current=1500~3000时 较高底盘功率出现;
+			测试数据: 摇杆推到最前面; total_current = 1295.1; total_current_limit=20833.3(p_max=499.9); 数据包接收到的 chassis_power = 49.43w; 使用功率计测到的功率也差不多
+			这个问题在Hero上通过 分段常数控制器 已经解决了7-20之前测试都没问题
+		
+		7-20晚上: 第一次测试步兵的时候, 把步兵架在架子上, 未使用超级电容 轮子空转 向前全速跑 有时会出现超功率扣血, 可能是cut-off不及时; 后来安装了 裁判系统超级电容管理模块
+		可是在7-21的相同测试中该问题并未复现
+		
+		
+			------ 第一个问题怎么解决呢? ------ 目前暂时把REFEREE_OFFLINE_POWER_LIM_VAL设高
+		*/
+		for (uint8_t i = 0; i < 4; i++)
+		{
+				PID_calc(&chassis_power_control->motor_speed_pid[i], chassis_power_control->motor_chassis[i].speed, chassis_power_control->motor_chassis[i].speed_set);
+		}
+			
+		direct_connect_e_cont.total_current = 0.0f;
+		//calculate the original motor current set
+		//计算原本电机电流设定
+		for(uint8_t i = 0; i < 4; i++)
+		{
+				direct_connect_e_cont.total_current += fabs(chassis_power_control->motor_speed_pid[i].out);
+		}
+		
+		if(direct_connect_e_cont.total_current > direct_connect_e_cont.total_current_limit)
+		{
+			current_scale = direct_connect_e_cont.total_current_limit / direct_connect_e_cont.total_current;
+			chassis_power_control->motor_speed_pid[0].out*=current_scale;
+			chassis_power_control->motor_speed_pid[1].out*=current_scale;
+			chassis_power_control->motor_speed_pid[2].out*=current_scale;
+			chassis_power_control->motor_speed_pid[3].out*=current_scale;
+		}
+	}/*开始 分段常数控制器 + 速度自适应的功率控制*/
+	else if(direct_connect_e_cont.chassis_power_buffer < direct_connect_e_cont.critical_power_buffer)
+	{//when below critical pt; just cut-off output
+		chassis_power_control->motor_speed_pid[0].out = 0.0f;
+		chassis_power_control->motor_speed_pid[1].out = 0.0f;
+		chassis_power_control->motor_speed_pid[2].out = 0.0f;
+		chassis_power_control->motor_speed_pid[3].out = 0.0f;
+		
+		direct_connect_e_cont.ene_cutoff_sts = below_ENERGY_CRITICAL_POINT;//for debug
+	}
+	else
+	{
+		direct_connect_e_cont.ene_cutoff_sts = above_ENERGY_CRITICAL_POINT;//for debug
+		
+		direct_connect_e_cont.current_loop_cnt = 0;// init value
+		while(1)
+		{
+			//calculate pid
+			for (uint8_t i = 0; i < 4; i++)
+			{
+					PID_calc(&chassis_power_control->motor_speed_pid[i], chassis_power_control->motor_chassis[i].speed, chassis_power_control->motor_chassis[i].speed_set);
+			}
+			
+			direct_connect_e_cont.total_current = 0.0f;
+			//calculate the original motor current set
+			//计算原本电机电流设定
+			for(uint8_t i = 0; i < 4; i++)
+			{
+					direct_connect_e_cont.total_current += fabs(chassis_power_control->motor_speed_pid[i].out);
+			}
+			direct_connect_e_cont.total_current_unit_amp = direct_connect_e_cont.total_current / 1000.0f;//convert esc control value to unit amp current
+			
+			if(direct_connect_e_cont.total_current > direct_connect_e_cont.total_current_limit)//direct_connect_e_cont.total_current_unit_amp * 24.0f > direct_connect_e_cont.p_max)
+			{
+//				  fp32 speed_adp_scale;
+					
+					direct_connect_e_cont.current_loop_cnt++;
+					if(direct_connect_e_cont.current_loop_cnt >= 8)
+					{
+						//达到设定循环次数上限 直接削弱目标电流来保证
+						//direct_connect_e_cont.total_current_limit = (fp32)direct_connect_e_cont.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+//						if(direct_connect_e_cont.total_current > direct_connect_e_cont.total_current_limit)
+//						{
+							//fp32 current_scale = direct_connect_e_cont.total_current_limit / direct_connect_e_cont.total_current;
+							current_scale = direct_connect_e_cont.total_current_limit / direct_connect_e_cont.total_current;
+							chassis_power_control->motor_speed_pid[0].out*=current_scale;
+							chassis_power_control->motor_speed_pid[1].out*=current_scale;
+							chassis_power_control->motor_speed_pid[2].out*=current_scale;
+							chassis_power_control->motor_speed_pid[3].out*=current_scale;
+//						}
+						direct_connect_e_cont.adp_pwr_ctrl_result_status = adp_cpc_MAX_loop_cnt_reached;
+						break;
+					}
+					else
+					{
+						//adapt speed
+						speed_adp_scale = 0.99f; //direct_connect_e_cont.total_current_limit / direct_connect_e_cont.total_current; //direct_connect_e_cont.p_max / (direct_connect_e_cont.total_current_unit_amp * 24.0f);
+						chassis_power_control->motor_chassis[0].speed_set *= speed_adp_scale;
+						chassis_power_control->motor_chassis[1].speed_set *= speed_adp_scale;
+						chassis_power_control->motor_chassis[2].speed_set *= speed_adp_scale;
+						chassis_power_control->motor_chassis[3].speed_set *= speed_adp_scale;
+					}
+			}
+			else
+			{
+				direct_connect_e_cont.adp_pwr_ctrl_result_status = adp_cpc_NORMAL;
+				break;
+			}
+		}
+	}
+	
+	//values and FSM for debug regarding speed-adaptive power ctrl algorithm
+	if(direct_connect_e_cont.adp_pwr_ctrl_result_status == adp_cpc_MAX_loop_cnt_reached)
+	{
+		direct_connect_e_cont.num_loop_limit_reached++;
+	}
+	else
+	{
+		if(direct_connect_e_cont.current_loop_cnt != 0)
+		{
+			direct_connect_e_cont.num_of_normal_loop++;
+		}
+		
+		if(direct_connect_e_cont.current_loop_cnt > direct_connect_e_cont.max_speed_adp_loop_cnt)
+		{
+			direct_connect_e_cont.max_speed_adp_loop_cnt = direct_connect_e_cont.current_loop_cnt;
+		}
+	}
+	
+	//values for debug
+	direct_connect_e_cont.motor_final_current[0] = chassis_power_control->motor_speed_pid[0].out;
+	direct_connect_e_cont.motor_final_current[1] = chassis_power_control->motor_speed_pid[1].out;
+	direct_connect_e_cont.motor_final_current[2] = chassis_power_control->motor_speed_pid[2].out;
+	direct_connect_e_cont.motor_final_current[3] = chassis_power_control->motor_speed_pid[3].out;
+	
+	direct_connect_e_cont.motor_final_total_current = 0;
+	for(uint8_t i = 0; i < 4; i++)
+	{
+		direct_connect_e_cont.motor_final_total_current += fabs(direct_connect_e_cont.motor_final_current[i]);
+	}
+		
+}
+
 //调控速度; 速度自适应的 功率控制; 结合 分段常数控制器
 void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
 {
