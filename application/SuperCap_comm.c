@@ -33,12 +33,6 @@ CAN_TxHeaderTypeDef  gen3Cap_tx_message;
 
 supercap_can_msg_id_e current_superCap; // ±íÃ÷µ±Ç°Ê¹ÓÃµÄÊÇÄÄÒ»¸ö³¬¼¶µçÈİ
 
-uint8_t debug_max_pwr;
-uint8_t debug_fail_safe_pwr;
-//uint8_t debug_a=0;
-//uint8_t debug_b;
-//uint8_t debug_c;
-
 uint32_t any_Cap_can_msg_send_TimeStamp = 0;
 const uint16_t any_Cap_can_msg_send_sendFreq = 100;
 
@@ -492,6 +486,18 @@ void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖ
 		*cap_voltage = temp_cap_voltage;
 		return;
 	}
+	else if(current_superCap == gen3Cap_ID)
+	{
+		temp_EBank = gen3Cap_info.EBank;
+		temp_cap_voltage = gen3Cap_info.Vbank_f;
+		
+		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
+		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 28.5f);
+		
+		*EBank = temp_EBank;
+		*cap_voltage = temp_cap_voltage;
+		return;
+	}
 	else if(current_superCap == sCap23_ID)
 	{
 		temp_EBank = sCap23_info.EBank;
@@ -524,9 +530,17 @@ void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖ
 uint16_t cpc_get_superCap_charge_pwr() //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
 {
 	fp32 temp_charge_pwr=0;
+	
 	if(current_superCap == ZiDaCap_ID)
 	{
 		temp_charge_pwr = zidaCap_info.max_charge_pwr_command;
+		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
+		
+		return (uint16_t)temp_charge_pwr;
+	}
+	else if(current_superCap == gen3Cap_ID)
+	{
+		temp_charge_pwr = gen3Cap_info.charge_pwr_command;
 		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êı¾İµÄÕıÈ·ºÍºÏÀíĞÔ
 		
 		return (uint16_t)temp_charge_pwr;
@@ -547,7 +561,48 @@ uint16_t cpc_get_superCap_charge_pwr() //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
 	}
 }
 
+// ¸ø chassis energy regulate µÄº¯Êı
+fp32 cer_get_current_cap_boost_mode_pct_threshold()
+{
+	if(current_superCap == ZiDaCap_ID)
+	{
+		return 0.5f;
+	}
+	else if(current_superCap == gen3Cap_ID)
+	{
+		return 0.5f;
+	}
+	else if(current_superCap == sCap23_ID)
+	{
+		return 0.5f;
+	}
+	else
+	{
+		return 0.5f;
+	}
+}
 
+// Please make sure relative_EBpct are calculated correctly using cal_capE_relative_pct(..)
+// ¸ø chassis energy regulate µÄº¯Êı relativeÖ¸Ïà¶ÔÓÚ×îĞ¡¿ÉÓÃÄÜÁ¿
+fp32 cer_get_current_cap_relative_pct()
+{
+	if(current_superCap == ZiDaCap_ID)
+	{
+		return zidaCap_info.relative_EBpct;
+	}
+	else if(current_superCap == sCap23_ID)
+	{
+		return sCap23_info.relative_EBpct;
+	}
+	else if(current_superCap == gen3Cap_ID)
+	{
+		return gen3Cap_info.relative_EBpct;
+	}
+	else
+	{
+		return wulieCap_info.relative_EBpct;
+	}
+}
 
 fp32 simple_get_current_cap_pct()
 {
@@ -656,8 +711,8 @@ fp32 ui_get_current_cap_voltage()
 	 }
 }
 
-// for ui, relative_EBpct are calculated correctly using cal_capE_relative_pct(..)
-fp32 ui_get_current_capE_relative_pct()
+// for ui, relative_EBpct are calculated correctly using cal_capE_relative_pct(..) relativeÖ¸Ïà¶ÔÓÚ×îĞ¡¿ÉÓÃÄÜÁ¿
+fp32 ui_get_current_cap_relative_pct()
 {
 //		return fp32_constrain( fabs((fp32) rc_ctrl.rc.ch[3]) / 660.0f, 0.0f, 1.0f);
 		//¼´²å¼´ÓÃµÄ³¬¼¶µçÈİ¿ØÖÆ°å ÅĞ¶Ï
