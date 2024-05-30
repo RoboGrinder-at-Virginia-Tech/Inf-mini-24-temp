@@ -403,7 +403,7 @@ void embed_all_info_update_from_sensor()
 	embed_msg_to_pc.vx_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vx_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vx;
 	embed_msg_to_pc.vy_wrt_gimbal = embed_msg_to_pc.chassis_move_ptr->vy_gimbal_orientation; //embed_msg_to_pc.chassis_move_ptr->vy;
 	embed_msg_to_pc.vw_wrt_chassis = embed_msg_to_pc.chassis_move_ptr->wz;
-	embed_msg_to_pc.energy_buff_pct = (uint8_t) get_current_cap_pct();
+	embed_msg_to_pc.energy_buff_pct = (uint8_t) simple_get_current_cap_pct();
 	
 	//9-30新增里程计 or use embed_msg_to_pc.chassis_odom_ptr
 	embed_msg_to_pc.odom_dist_x = get_chassis_gimbal_dir_distance_x(); //not used

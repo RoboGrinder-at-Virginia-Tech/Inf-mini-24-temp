@@ -205,7 +205,7 @@ typedef struct
 	fp32 vy_wrt_gimbal; // 云台朝向 vy m/s
 	fp32 vw_wrt_chassis; // 底盘 radian/s
 	
-	uint8_t energy_buff_pct; //get_superCap_charge_pwr
+	uint8_t energy_buff_pct;
 	
 	//9-30新增底盘 云台方向当前前进 里程计 odometer
 	fp32 odom_dist_x; // forward/back x odom in m

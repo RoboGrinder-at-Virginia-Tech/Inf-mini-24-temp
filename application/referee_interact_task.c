@@ -32,7 +32,7 @@
 ////extern shoot_control_t shoot_control; 
 ////extern miniPC_info_t miniPC_info;
 //extern supercap_can_msg_id_e current_superCap;
-//extern wulieCap_info_t wulie_Cap_info;
+//extern wulieCap_info_t wulieCap_info;
 //extern sCap23_info_t sCap23_info; //新的超级电容控制板
 
 //unsigned char UI_Seq;     //包序号
@@ -824,14 +824,14 @@
 ////	 }
 
 //	 //开始整数字相关的东西 即插即用的超级电容控制板 判断
-////	 ui_info.cap_pct = get_current_cap_voltage();
-//	 ui_info.cap_volt = get_current_cap_voltage();
-//	 ui_info.cap_relative_pct = get_current_capE_relative_pct();
+////	 ui_info.cap_pct = ui_get_current_cap_voltage();
+//	 ui_info.cap_volt = ui_get_current_cap_voltage();
+//	 ui_info.cap_relative_pct = ui_get_current_capE_relative_pct();
 //	 ui_info.cap_pct = ui_info.cap_relative_pct;
 //	 
 ////	 if(current_superCap == SuperCap_ID)
 ////	 {
-////		 if(toe_is_error(SUPERCAP_TOE))
+////		 if(toe_is_error(ZIDACAP_TOE))
 ////		 {
 ////			 ui_info.cap_pct = 0.0f;
 ////			 ui_info.cap_volt = 0.0f;
@@ -857,15 +857,15 @@
 ////	 }
 ////	 else
 ////	 {
-////		 if(toe_is_error(WULIE_CAP_TOE))
+////		 if(toe_is_error(WULIECAP_TOE))
 ////		 {
 ////			 ui_info.cap_pct = 0.0f;
 ////			 ui_info.cap_volt = 0.0f;
 ////		 }
 ////		 else
 ////		 {
-////			 ui_info.cap_pct = wulie_Cap_info.EBPct;
-////		   ui_info.cap_volt = wulie_Cap_info.cap_voltage;
+////			 ui_info.cap_pct = wulieCap_info.EBPct;
+////		   ui_info.cap_volt = wulieCap_info.cap_voltage;
 ////		 }
 ////	 }
 //	 
@@ -874,7 +874,7 @@
 //	 ui_info.proj_speed_limit = get_shooter_id1_17mm_speed_limit();
 //	 
 //	 //超级电容相关
-//	 ui_info.superCap_line_var_length = (uint16_t) Center_Bottom_SuperCap_Line_Length_Max * fp32_constrain( get_current_capE_relative_pct(), 0.0f, 1.0f);
+//	 ui_info.superCap_line_var_length = (uint16_t) Center_Bottom_SuperCap_Line_Length_Max * fp32_constrain( ui_get_current_capE_relative_pct(), 0.0f, 1.0f);
 //	 
 //	 chassis_frame_UI_sensor_update(); //update gimbal yaw angle
 //	 ui_error_code_update();

@@ -141,22 +141,6 @@ void chassis_task(void const *pvParameters)
         }
 				//控制函数, 专门用于超级电容的发送
 				superCap_control_loop();
-				//------------------------
-//				//Debug SZL 3-10-2022
-//				if(switch_is_mid(chassis_move.chassis_RC->rc.s[CHASSIS_MODE_CHANNEL]))
-//				{
-//					 superCap_info.a = 7;
-//					 superCap_info.b = 8;
-//					 superCap_info.c = 9;
-//					 debug_a = 10;
-//					 debug_b = 11;
-//					 debug_c = 12;
-//					 debug_anotherstr.a_1 = 1;
-//					 debug_anotherstr.a_2 = 2;
-//					 superCap_info.max_charge_pwr_command = debug_max_pwr;
-//					 superCap_info.fail_safe_charge_pwr_command = debug_fail_safe_pwr;
-//					 CAN_command_superCap(superCap_info.max_charge_pwr_command, superCap_info.fail_safe_charge_pwr_command);
-//				}
 				
         //os delay
         //系统延时

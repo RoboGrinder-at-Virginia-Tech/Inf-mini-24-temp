@@ -64,8 +64,8 @@ void superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power
 		//识别 并处理 chassis_power 和 chassis_power_buffer 不合理数值；--- SZL: 暂时不处理 --- 且这下数据对有超级电容来说 不是很重要
 		
 		//从 超级电容 获取当前剩余能量 获取当前使用的超级电容的剩余能量
-	  get_superCap_vol_and_energy(&chassis_e_ctrl.superCap_vol, &chassis_e_ctrl.superCap_e_buffer);
-		chassis_e_ctrl.superCap_charge_pwr = (uint16_t)get_superCap_charge_pwr();
+	  cpc_get_superCap_vol_and_energy(&chassis_e_ctrl.superCap_vol, &chassis_e_ctrl.superCap_e_buffer);
+		chassis_e_ctrl.superCap_charge_pwr = (uint16_t)cpc_get_superCap_charge_pwr();
 		
 		//judge output cut-off point based on remaining energy and set the buffer ene critical val point
 		/* VOL_OUTPUT_CUTOFF_POINT = 14.72f; MINIMUM_VOL=15.81f*/

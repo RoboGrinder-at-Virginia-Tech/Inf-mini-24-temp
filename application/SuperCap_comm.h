@@ -39,17 +39,17 @@ extern uint8_t debug_fail_safe_pwr;
 extern void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr);
 extern void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr);
 extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode);
-extern void CAN_command_wulie_Cap(uint16_t temPower);
+extern void CAN_command_wulieCap(uint16_t temPower);
 extern void superCap_offline_proc(void);
 extern bool_t superCap_is_data_error_proc(void);
 extern void superCap_solve_data_error_proc(void);
 extern void superCap_comm_bothway_init(void);
 extern void superCap_control_loop(void);
 
-extern void wulie_Cap_offline_proc(void);
-extern bool_t wulie_Cap_is_data_error_proc(void);
-extern void get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank);
-extern uint16_t get_superCap_charge_pwr(void);
+extern void wulieCap_offline_proc(void);
+extern bool_t wulieCap_is_data_error_proc(void);
+extern void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank);
+extern uint16_t cpc_get_superCap_charge_pwr(void);
 extern bool_t current_superCap_is_offline(void);
 extern bool_t all_superCap_is_offline(void);
 
@@ -59,8 +59,8 @@ extern bool_t sCap23_is_data_error_proc(void);
 extern void gen3Cap_offline_proc(void);
 extern bool_t gen3Cap_is_data_error_proc(void);
 
-extern fp32 get_current_cap_voltage(void);
-extern fp32 get_current_cap_pct(void);
+extern fp32 ui_get_current_cap_voltage(void);
+extern fp32 simple_get_current_cap_pct(void);
 
 typedef enum
 {
@@ -73,9 +73,9 @@ typedef enum
 	RMTypeC_Master_Command_ID_for_gen3Cap = 0x3FF,
 	
 	//SuperCap -> TypeC时 CAN报文 即反馈报文的ID:
-	 SuperCap_ID = 0x500,
+	 ZiDaCap_ID = 0x500,
 	
-	//sCap23易林超级电容 -> TypeC
+	//sCap23 易林超级电容 -> TypeC
 	 sCap23_ID = 0x501,
 	
 	 //彭睿 第三代超级电容 -> TypeC
@@ -86,7 +86,7 @@ typedef enum
 	RMTypeC_Master_Command_ID_for_WuLie = 0x210,
 	
 	//wulie Cap -> TypeC
-	wulie_Cap_CAN_ID = 0x211,
+	WuLieCap_CAN_ID = 0x211,
 }supercap_can_msg_id_e;
 
 typedef enum
@@ -123,13 +123,9 @@ typedef struct
 		uint8_t array[2];
 	}msg_u_EBPct, msg_u_VBKelvin;
 	
-	uint8_t a;
-	uint8_t b;
-	uint8_t c;
-	
 	fp32 relative_EBpct; // 相对于最低电压的百分比
 	
-}superCap_info_t;
+}zidaCap_info_t; // ZiDa 超级电容
 
 /*12-27-2022新增 易林 超级电容
 superCap23_info_t;
@@ -194,7 +190,7 @@ typedef struct
 	//裁判系统
 	uint8_t power_management_chassis_output; // 0为无输出, 1为24v
 	
-}gen3Cap_info_t;
+}gen3Cap_info_t; // PR 第三代超级电容
 
 typedef struct
 {
@@ -219,13 +215,13 @@ typedef struct
 
 }wulieCap_info_t;
 
-extern superCap_info_t superCap_info;
+extern zidaCap_info_t zidaCap_info;
 extern uint8_t debug_a;
 extern uint8_t debug_b;
 extern uint8_t debug_c;
 
 extern fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol);
-extern fp32 get_current_capE_relative_pct(void);
+extern fp32 ui_get_current_capE_relative_pct(void);
 extern supercap_can_msg_id_e get_current_superCap(void);
 
 #endif /*__SUPERCAP_COMM_H___*/

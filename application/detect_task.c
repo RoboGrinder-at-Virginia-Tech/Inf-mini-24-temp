@@ -322,9 +322,9 @@ static void detect_init(uint32_t time)
     error_list[OLED_TOE].solve_data_error_fun = NULL;
 		
 		//SZL 3-12-2022
-		error_list[SUPERCAP_TOE].data_is_error_fun = superCap_is_data_error_proc;
-		error_list[SUPERCAP_TOE].solve_lost_fun = superCap_offline_proc;
-		error_list[SUPERCAP_TOE].solve_data_error_fun = NULL;
+		error_list[ZIDACAP_TOE].data_is_error_fun = superCap_is_data_error_proc;
+		error_list[ZIDACAP_TOE].solve_lost_fun = superCap_offline_proc;
+		error_list[ZIDACAP_TOE].solve_data_error_fun = NULL;
 		
 		//SZL 12-27-2022 易林新超级电容
 		error_list[SCAP_23_TOR].data_is_error_fun = sCap23_is_data_error_proc;
@@ -337,9 +337,9 @@ static void detect_init(uint32_t time)
 		error_list[GEN3CAP_TOE].solve_data_error_fun = NULL;
 		
 		//雾列超级电容 相关函数
-		error_list[WULIE_CAP_TOE].data_is_error_fun = wulie_Cap_is_data_error_proc;
-		error_list[WULIE_CAP_TOE].solve_lost_fun = wulie_Cap_offline_proc;
-		error_list[WULIE_CAP_TOE].solve_data_error_fun = NULL;
+		error_list[WULIECAP_TOE].data_is_error_fun = wulieCap_is_data_error_proc;
+		error_list[WULIECAP_TOE].solve_lost_fun = wulieCap_offline_proc;
+		error_list[WULIECAP_TOE].solve_data_error_fun = NULL;
 		
 		//miniPC 相关掉线函数
 		error_list[PC_TOE].data_is_error_fun = pc_is_data_error_proc; //miniPC_is_data_error_proc;

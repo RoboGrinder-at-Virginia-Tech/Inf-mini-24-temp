@@ -31,8 +31,8 @@
 //SZL 3-12-2022
 #include "SuperCap_comm.h"
 
-extern superCap_info_t superCap_info;
-extern wulieCap_info_t wulie_Cap_info;
+extern zidaCap_info_t zidaCap_info;
+extern wulieCap_info_t wulieCap_info;
 extern supercap_can_msg_id_e current_superCap;
 extern sCap23_info_t sCap23_info; //新的超级电容控制板
 extern gen3Cap_info_t gen3Cap_info;
@@ -462,20 +462,20 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 //						  detect_hook(TRIGGER_MOTOR_TOE);//这里先使用, 为了OLED的显示: TRIGGER_MOTOR_TOE <=> TRIGGER_MOTOR_17mm_TOE
 //							break;
 //					}
-					case SuperCap_ID:
+					case ZiDaCap_ID:
 					{
-							current_superCap = SuperCap_ID;
-							superCap_info.msg_u_EBPct.array[1] = rx_data[0];
-							superCap_info.msg_u_EBPct.array[0] = rx_data[1];
+							current_superCap = ZiDaCap_ID;
+							zidaCap_info.msg_u_EBPct.array[1] = rx_data[0];
+							zidaCap_info.msg_u_EBPct.array[0] = rx_data[1];
 							
-							superCap_info.msg_u_VBKelvin.array[1] = rx_data[2];
-							superCap_info.msg_u_VBKelvin.array[0] = rx_data[3];
+							zidaCap_info.msg_u_VBKelvin.array[1] = rx_data[2];
+							zidaCap_info.msg_u_VBKelvin.array[0] = rx_data[3];
 						
-							superCap_info.EBPct_fromCap = (float)(superCap_info.msg_u_EBPct.msg_u / 100.0f);
-							superCap_info.VBKelvin_fromCap = (float)(superCap_info.msg_u_VBKelvin.msg_u / 100.0f);
+							zidaCap_info.EBPct_fromCap = (float)(zidaCap_info.msg_u_EBPct.msg_u / 100.0f);
+							zidaCap_info.VBKelvin_fromCap = (float)(zidaCap_info.msg_u_VBKelvin.msg_u / 100.0f);
 						  
 						  //SZL 7-21-2022 新增能量的计算
-						  superCap_info.EBank = 0.5f * superCap_info.VBKelvin_fromCap * superCap_info.VBKelvin_fromCap * CAPACITY_ZIDA_CAP;//CAPACITY=6
+						  zidaCap_info.EBank = 0.5f * zidaCap_info.VBKelvin_fromCap * zidaCap_info.VBKelvin_fromCap * CAPACITY_ZIDA_CAP;//CAPACITY=6
 							
 							
 							debug_r2.data[0] = rx_data_debug[3];
@@ -483,7 +483,7 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							debug_r2.data[2] = rx_data_debug[1];
 							debug_r2.data[3] = rx_data_debug[0];
 							
-							detect_hook(SUPERCAP_TOE);
+							detect_hook(ZIDACAP_TOE);
 							break;
 					}
 					case gen3Cap_ID:
@@ -542,24 +542,24 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							detect_hook(SCAP_23_TOR);
 							break;
 					}
-					case wulie_Cap_CAN_ID:
+					case WuLieCap_CAN_ID:
 					{
-							current_superCap = wulie_Cap_CAN_ID;
+							current_superCap = WuLieCap_CAN_ID;
 						  uint16_t* pPowerdata = (uint16_t *) rx_data;//------------------------------------
-							wulie_Cap_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
-							wulie_Cap_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
-							wulie_Cap_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
-							wulie_Cap_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
+							wulieCap_info.PowerData[0] = (fp32)pPowerdata[0] / 100.0f;
+							wulieCap_info.PowerData[1] = (fp32)pPowerdata[1] / 100.0f;
+							wulieCap_info.PowerData[2] = (fp32)pPowerdata[2] / 100.0f;
+							wulieCap_info.PowerData[3] = (fp32)pPowerdata[3] / 100.0f;
 						
-							wulie_Cap_info.input_voltage = wulie_Cap_info.PowerData[0]; //输入电压
-							wulie_Cap_info.cap_voltage = wulie_Cap_info.PowerData[1];//电容电压
-							wulie_Cap_info.input_current = wulie_Cap_info.PowerData[2];//输入电流
-							wulie_Cap_info.set_power = wulie_Cap_info.PowerData[3];//设定功率
+							wulieCap_info.input_voltage = wulieCap_info.PowerData[0]; //输入电压
+							wulieCap_info.cap_voltage = wulieCap_info.PowerData[1];//电容电压
+							wulieCap_info.input_current = wulieCap_info.PowerData[2];//输入电流
+							wulieCap_info.set_power = wulieCap_info.PowerData[3];//设定功率
 						
 							//计算容量
-							wulie_Cap_info.EBank = 0.5f * wulie_Cap_info.cap_voltage * wulie_Cap_info.cap_voltage * CAPACITY_WULIE_CAP;//CAPACITY=6
-						  wulie_Cap_info.EBPct = (wulie_Cap_info.cap_voltage * wulie_Cap_info.cap_voltage)/(CHARACTERISTIC_VOLTAGE_WULIE_CAP * CHARACTERISTIC_VOLTAGE_WULIE_CAP)*100.0f;
-							detect_hook(WULIE_CAP_TOE);
+							wulieCap_info.EBank = 0.5f * wulieCap_info.cap_voltage * wulieCap_info.cap_voltage * CAPACITY_WULIE_CAP;//CAPACITY=6
+						  wulieCap_info.EBPct = (wulieCap_info.cap_voltage * wulieCap_info.cap_voltage)/(CHARACTERISTIC_VOLTAGE_WULIE_CAP * CHARACTERISTIC_VOLTAGE_WULIE_CAP)*100.0f;
+							detect_hook(WULIECAP_TOE);
 							break;
 					}
 

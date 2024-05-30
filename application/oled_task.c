@@ -124,7 +124,7 @@ void oled_task(void const * argument)
 								
 								//添加两种超级电容在线状态框和电压 - 在DBUS旁边 - TODO: cap电压数据限制
 								char cap_vol_str[20];
-								sprintf(cap_vol_str, "%.1f", get_current_cap_voltage());
+								sprintf(cap_vol_str, "%.1f", ui_get_current_cap_voltage());
 								OLED_show_string(30, 50, (uint8_t*)"SP");
 								OLED_show_string(30+15, 50, (uint8_t*)cap_vol_str); //30+20, 50
                 OLED_show_graphic(50+25, 50, &check_box[error_list_local[GEN3CAP_TOE].error_exist]); //SCAP_23_TOR
