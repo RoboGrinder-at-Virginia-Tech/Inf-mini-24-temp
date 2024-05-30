@@ -73,7 +73,6 @@ void superCap_comm_bothway_init()
 	current_superCap = sCap23_ID; //SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
 }
 
-uint16_t temp_pwr_command=0;
 void superCap_control_loop()
 {
 	//发送任务计时, 时间到了开始一次发送
@@ -82,7 +81,10 @@ void superCap_control_loop()
 		any_Cap_can_msg_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
 			
 		if(current_superCap == ZiDaCap_ID)
-		{//紫达控制板
+		{
+			uint16_t temp_pwr_command=0;
+			
+			//紫达控制板
 			//Texas 调试
 			temp_pwr_command = get_chassis_power_limit();
 			
