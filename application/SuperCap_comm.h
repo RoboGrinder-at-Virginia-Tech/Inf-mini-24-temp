@@ -5,7 +5,6 @@
 #include "CAN_receive.h"
 
 #define SUPERCAP_CAN hcan1
-#define SCAP23_CAN hcan1
 
 ///*以下两个Texas不使用*/
 //#define ICRA_superCap_max_power 65//40
@@ -37,7 +36,7 @@
 typedef enum
 {
 	/*TypeC -> SuperCap 时 CAN报文 即指令的ID
-	(1)TypeC -> SuperCapZida (2)TypeC -> SuperCap23, sCap23
+	(1)TypeC -> SuperCapZida (2)TypeC -> gen2Cap
 	*/
 	 RMTypeC_Master_Command_ID = 0x4FF,
 	
@@ -47,8 +46,8 @@ typedef enum
 	//SuperCap -> TypeC时 CAN报文 即反馈报文的ID:
 	 ZiDaCap_ID = 0x500,
 	
-	//sCap23 易林超级电容 -> TypeC
-	 sCap23_ID = 0x501,
+	//gen2Cap 易林超级电容 -> TypeC
+	 gen2Cap_ID = 0x501,
 	
 	 //彭睿 第三代超级电容 -> TypeC
 	 gen3Cap_ID = 0x503,
@@ -131,7 +130,7 @@ typedef struct
 	
 	fp32 relative_EBpct; // 相对于最低电压的百分比
 	
-}sCap23_info_t;
+}gen2Cap_info_t;
 
 typedef struct
 {
@@ -192,7 +191,7 @@ extern zidaCap_info_t zidaCap_info;
 extern fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol);
 
 extern void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr);
-extern void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr);
+extern void CAN_command_gen2Cap(uint8_t max_pwr, uint8_t fail_safe_pwr);
 extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode);
 extern void CAN_command_wulieCap(uint16_t temPower);
 extern void superCap_offline_proc(void);
@@ -207,8 +206,8 @@ extern bool_t wulieCap_is_data_error_proc(void);
 extern bool_t current_superCap_is_offline(void);
 extern bool_t all_superCap_is_offline(void);
 
-extern void sCap23_offline_proc(void);
-extern bool_t sCap23_is_data_error_proc(void);
+extern void gen2Cap_offline_proc(void);
+extern bool_t gen2Cap_is_data_error_proc(void);
 
 extern void gen3Cap_offline_proc(void);
 extern bool_t gen3Cap_is_data_error_proc(void);

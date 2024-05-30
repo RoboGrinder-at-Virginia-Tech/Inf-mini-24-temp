@@ -18,17 +18,17 @@ void superCap_offline_proc(void);
 //static CAN_TxHeaderTypeDef  superCap_tx_message;
 static uint8_t              superCap_can_send_data[8];
 static uint8_t              wulieCap_can_send_data[8];
-static uint8_t              sCap23_can_send_data[8];
+static uint8_t              gen2Cap_can_send_data[8];
 static uint8_t              gen3Cap_can_send_data[8];
 
 zidaCap_info_t zidaCap_info;// ZiDa ³¬¼¶µçÈÝ
 wulieCap_info_t wulieCap_info;//  ÎíÁÐ³¬¼¶µçÈÝ¿ØÖÆ°åµÄ½á¹¹Ìå
-sCap23_info_t sCap23_info; // PR YiLin 2023 Seattle ³¬¼¶µçÈÝ¿ØÖÆ°å
+gen2Cap_info_t gen2Cap_info; // PR YiLin 2023 Seattle ³¬¼¶µçÈÝ¿ØÖÆ°å
 gen3Cap_info_t gen3Cap_info; // µÚÈý´ú³¬¼¶µçÈÝ
 
 CAN_TxHeaderTypeDef  superCap_tx_message;
 CAN_TxHeaderTypeDef  wulieCap_tx_message;
-CAN_TxHeaderTypeDef  sCap23_tx_message;
+CAN_TxHeaderTypeDef  gen2Cap_tx_message;
 CAN_TxHeaderTypeDef  gen3Cap_tx_message;
 
 supercap_can_msg_id_e current_superCap; // ±íÃ÷µ±Ç°Ê¹ÓÃµÄÊÇÄÄÒ»¸ö³¬¼¶µçÈÝ
@@ -64,7 +64,7 @@ void superCap_comm_bothway_init()
 	zidaCap_info.msg_u_EBPct.array[0] = 0;
 	zidaCap_info.msg_u_EBPct.array[1] = 0;
 	
-	current_superCap = sCap23_ID; //SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
+	current_superCap = gen2Cap_ID; //SuperCap_ID;//SuperCap_ID wulie_Cap_CAN_ID
 }
 
 void superCap_control_loop()
@@ -199,31 +199,31 @@ void superCap_control_loop()
 				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
 			}
 		}
-		else if(current_superCap == sCap23_ID)
-		{//sCap23Ò×ÁÖ³¬¼¶µçÈÝ¿ØÖÆ°å
+		else if(current_superCap == gen2Cap_ID)
+		{// gen2Cap Ò×ÁÖ³¬¼¶µçÈÝ¿ØÖÆ°å
 			//¼ÆËãmax_charge_pwr_from_ref
-			sCap23_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f; //2.5f
+			gen2Cap_info.max_charge_pwr_from_ref = get_chassis_power_limit() - 0.0f; //2.5f
 			
-			if(sCap23_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
+			if(gen2Cap_info.max_charge_pwr_from_ref > CMD_CHARGE_PWR_MAX)//101.0f)
 			{
-				sCap23_info.max_charge_pwr_from_ref = 40;
+				gen2Cap_info.max_charge_pwr_from_ref = 40;
 			}
 			
 //			//Only for Debug
-//			sCap23_info.max_charge_pwr_from_ref = 41; //66;
+//			gen2Cap_info.max_charge_pwr_from_ref = 41; //66;
 			//--------------------------------------------
 			
 			//¼ÆËãfail_safe_charge_pwr_ref ÐÞ¸Ä³ÉÓÃifelse±ê¶¨µÈ¼¶±ê¶¨fail safe, Õâ¸öµÄÄ¿µÄÊÇ ±ÈÈüÖÐ¿ÉÄÜÓÐÁÙÊ±µÄµ×ÅÌ³äµçÔöÒæ, fail safe±íÊ¾µ±Ç°µÄÒ»¸ö°²È«ÊýÖµ
-			sCap23_info.fail_safe_charge_pwr_ref = sCap23_info.max_charge_pwr_from_ref; //40; // 60; // = sCap23_info.max_charge_pwr_from_ref;
+			gen2Cap_info.fail_safe_charge_pwr_ref = gen2Cap_info.max_charge_pwr_from_ref; //40; // 60; // = gen2Cap_info.max_charge_pwr_from_ref;
 		
-			sCap23_info.charge_pwr_command = sCap23_info.max_charge_pwr_from_ref;
-			sCap23_info.fail_safe_charge_pwr_command = sCap23_info.fail_safe_charge_pwr_ref;
+			gen2Cap_info.charge_pwr_command = gen2Cap_info.max_charge_pwr_from_ref;
+			gen2Cap_info.fail_safe_charge_pwr_command = gen2Cap_info.fail_safe_charge_pwr_ref;
 			
 			//ÏÞÖÆ·ù¶È
-			sCap23_info.charge_pwr_command = uint8_constrain(sCap23_info.charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
-			sCap23_info.fail_safe_charge_pwr_command = uint8_constrain(sCap23_info.fail_safe_charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			gen2Cap_info.charge_pwr_command = uint8_constrain(gen2Cap_info.charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
+			gen2Cap_info.fail_safe_charge_pwr_command = uint8_constrain(gen2Cap_info.fail_safe_charge_pwr_command, CMD_CHARGE_PWR_MIN, CMD_CHARGE_PWR_MAX);
 			
-			CAN_command_sCap23(sCap23_info.charge_pwr_command, sCap23_info.fail_safe_charge_pwr_command);
+			CAN_command_gen2Cap(gen2Cap_info.charge_pwr_command, gen2Cap_info.fail_safe_charge_pwr_command);
 		}
 		else //if(current_superCap == WuLieCap_CAN_ID)
 		{//ÎíÁÐ¿ØÖÆ°å
@@ -254,9 +254,9 @@ bool_t current_superCap_is_offline()
 	{
 		return toe_is_error(GEN3CAP_TOE);
 	}
-	else if(current_superCap == sCap23_ID) //SuperCap_ID
+	else if(current_superCap == gen2Cap_ID) //SuperCap_ID
 	{
-		return toe_is_error(SCAP_23_TOR);
+		return toe_is_error(GEN2CAP_TOE);
 	}
 	else if(current_superCap == WuLieCap_CAN_ID)
 	{
@@ -270,7 +270,7 @@ bool_t current_superCap_is_offline()
 
 bool_t all_superCap_is_offline()
 {
-	return toe_is_error(ZIDACAP_TOE) && toe_is_error(WULIECAP_TOE) && toe_is_error(SCAP_23_TOR);
+	return toe_is_error(ZIDACAP_TOE) && toe_is_error(WULIECAP_TOE) && toe_is_error(GEN2CAP_TOE) && toe_is_error(GEN3CAP_TOE);
 }
 
 supercap_can_msg_id_e get_current_superCap()
@@ -283,22 +283,22 @@ supercap_can_msg_id_e get_current_superCap()
 SZL 3-10-2022 ÏÂ·¢µ½SuperCapµÄÊý¾Ý
 SZL 12-27-2022 ÐÂÔöYiLin³¬¼¶µçÈÝ
 */
-void CAN_command_sCap23(uint8_t max_pwr, uint8_t fail_safe_pwr)
+void CAN_command_gen2Cap(uint8_t max_pwr, uint8_t fail_safe_pwr)
 {
 		uint32_t send_mail_box;
-    sCap23_tx_message.StdId = RMTypeC_Master_Command_ID;
-    sCap23_tx_message.IDE = CAN_ID_STD;
-    sCap23_tx_message.RTR = CAN_RTR_DATA;
-    sCap23_tx_message.DLC = 0x08;
-    sCap23_can_send_data[0] = max_pwr;
-    sCap23_can_send_data[1] = fail_safe_pwr;
-    sCap23_can_send_data[2] = 0;
-    sCap23_can_send_data[3] = 0;
-    sCap23_can_send_data[4] = 0; 
-    sCap23_can_send_data[5] = 0; 
-    sCap23_can_send_data[6] = 0; 
-    sCap23_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&SCAP23_CAN, &sCap23_tx_message, sCap23_can_send_data, &send_mail_box);
+    gen2Cap_tx_message.StdId = RMTypeC_Master_Command_ID;
+    gen2Cap_tx_message.IDE = CAN_ID_STD;
+    gen2Cap_tx_message.RTR = CAN_RTR_DATA;
+    gen2Cap_tx_message.DLC = 0x08;
+    gen2Cap_can_send_data[0] = max_pwr;
+    gen2Cap_can_send_data[1] = fail_safe_pwr;
+    gen2Cap_can_send_data[2] = 0;
+    gen2Cap_can_send_data[3] = 0;
+    gen2Cap_can_send_data[4] = 0; 
+    gen2Cap_can_send_data[5] = 0; 
+    gen2Cap_can_send_data[6] = 0; 
+    gen2Cap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen2Cap_tx_message, gen2Cap_can_send_data, &send_mail_box);
 }
 
 void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode)
@@ -316,7 +316,7 @@ void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_en
     gen3Cap_can_send_data[5] = 0; 
     gen3Cap_can_send_data[6] = 0; 
     gen3Cap_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&SCAP23_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);
+    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);
 }
 
 void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
@@ -396,14 +396,14 @@ void superCap_solve_data_error_proc()
 }
 
 //ÒÔÏÂÎªÒ×ÁÖ³¬¼¶µçÈÝÏà¹Ø
-void sCap23_offline_proc()
+void gen2Cap_offline_proc()
 {
-		sCap23_info.status = superCap_offline;
+		gen2Cap_info.status = superCap_offline;
 }
 
-bool_t sCap23_is_data_error_proc()
+bool_t gen2Cap_is_data_error_proc()
 {
-		sCap23_info.status = superCap_online;
+		gen2Cap_info.status = superCap_online;
 		//ÓÀÔ¶ return 0;
 		return 0;
 //		//ICRA
@@ -498,10 +498,10 @@ void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank) //½ö¹¦ÂÊ¿ØÖ
 		*cap_voltage = temp_cap_voltage;
 		return;
 	}
-	else if(current_superCap == sCap23_ID)
+	else if(current_superCap == gen2Cap_ID)
 	{
-		temp_EBank = sCap23_info.EBank;
-		temp_cap_voltage = sCap23_info.Vbank_f;
+		temp_EBank = gen2Cap_info.EBank;
+		temp_cap_voltage = gen2Cap_info.Vbank_f;
 		
 		temp_EBank = fp32_constrain(temp_EBank, 0.0f, 2106.75f);//È·±£Êý¾ÝµÄÕýÈ·ºÍºÏÀíÐÔ
 		temp_cap_voltage = fp32_constrain(temp_cap_voltage, 0.0f, 28.5f);
@@ -545,9 +545,9 @@ uint16_t cpc_get_superCap_charge_pwr() //½ö¹¦ÂÊ¿ØÖÆÊ¹ÓÃ
 		
 		return (uint16_t)temp_charge_pwr;
 	}
-	else if(current_superCap == sCap23_ID)
+	else if(current_superCap == gen2Cap_ID)
 	{
-		temp_charge_pwr = sCap23_info.charge_pwr_command;
+		temp_charge_pwr = gen2Cap_info.charge_pwr_command;
 		temp_charge_pwr = fp32_constrain(temp_charge_pwr, 0.0f, (fp32)CMD_CHARGE_PWR_MAX);//È·±£Êý¾ÝµÄÕýÈ·ºÍºÏÀíÐÔ
 		
 		return (uint16_t)temp_charge_pwr;
@@ -577,7 +577,7 @@ fp32 cer_get_current_cap_boost_mode_pct_threshold()
 	{
 		return 0.5f;
 	}
-	else if(current_superCap == sCap23_ID)
+	else if(current_superCap == gen2Cap_ID)
 	{
 		return 0.5f;
 	}
@@ -595,9 +595,9 @@ fp32 cer_get_current_cap_relative_pct()
 	{
 		return zidaCap_info.relative_EBpct;
 	}
-	else if(current_superCap == sCap23_ID)
+	else if(current_superCap == gen2Cap_ID)
 	{
-		return sCap23_info.relative_EBpct;
+		return gen2Cap_info.relative_EBpct;
 	}
 	else if(current_superCap == gen3Cap_ID)
 	{
@@ -626,9 +626,9 @@ fp32 simple_get_current_cap_pct()
 			 //ui_info.cap_volt = zidaCap_info.VBKelvin_fromCap;
 		 }
 	 }
-	 else if(current_superCap == sCap23_ID)
+	 else if(current_superCap == gen2Cap_ID)
 	 {
-		 if(toe_is_error(SCAP_23_TOR))
+		 if(toe_is_error(GEN2CAP_TOE))
 		 {
 			 //ui_info.cap_pct = 0.0f;
 			 //ui_info.cap_volt = 0.0f;
@@ -636,8 +636,8 @@ fp32 simple_get_current_cap_pct()
 		 }
 		 else
 		 {
-			 return sCap23_info.EBPct;
-		   //ui_info.cap_volt = sCap23_info.Vbank_f;
+			 return gen2Cap_info.EBPct;
+		   //ui_info.cap_volt = gen2Cap_info.Vbank_f;
 		 }
 	 }
 	 else
@@ -682,13 +682,13 @@ fp32 ui_get_current_cap_voltage()
 		 }
 		 else
 		 {
-			 //ui_info.cap_pct = sCap23_info.EBPct;
+			 //ui_info.cap_pct = gen2Cap_info.EBPct;
 		   return gen3Cap_info.Vbank_f;
 		 }
 	 }
-	 else if(current_superCap == sCap23_ID)
+	 else if(current_superCap == gen2Cap_ID)
 	 {
-		 if(toe_is_error(SCAP_23_TOR))
+		 if(toe_is_error(GEN2CAP_TOE))
 		 {
 			 //ui_info.cap_pct = 0.0f;
 			 //ui_info.cap_volt = 0.0f;
@@ -696,8 +696,8 @@ fp32 ui_get_current_cap_voltage()
 		 }
 		 else
 		 {
-			 //ui_info.cap_pct = sCap23_info.EBPct;
-		   return sCap23_info.Vbank_f;
+			 //ui_info.cap_pct = gen2Cap_info.EBPct;
+		   return gen2Cap_info.Vbank_f;
 		 }
 	 }
 	 else
@@ -732,15 +732,15 @@ fp32 ui_get_current_cap_relative_pct()
 				 return zidaCap_info.relative_EBpct;
 			 }
 		 }
-		 else if(current_superCap == sCap23_ID)
+		 else if(current_superCap == gen2Cap_ID)
 		 {
-			 if(toe_is_error(SCAP_23_TOR))
+			 if(toe_is_error(GEN2CAP_TOE))
 			 {
 				 return 0.0f;
 			 }
 			 else
 			 {
-				 return sCap23_info.relative_EBpct;
+				 return gen2Cap_info.relative_EBpct;
 			 }
 		 }
 		 else if(current_superCap == gen3Cap_ID)
@@ -753,7 +753,7 @@ fp32 ui_get_current_cap_relative_pct()
 			 }
 			 else
 			 {
-				 //ui_info.cap_pct = sCap23_info.EBPct;
+				 //ui_info.cap_pct = gen2Cap_info.EBPct;
 				 return gen3Cap_info.relative_EBpct;
 			 }
 		 }

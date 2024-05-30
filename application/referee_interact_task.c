@@ -33,7 +33,7 @@
 ////extern miniPC_info_t miniPC_info;
 //extern supercap_can_msg_id_e current_superCap;
 //extern wulieCap_info_t wulieCap_info;
-//extern sCap23_info_t sCap23_info; //新的超级电容控制板
+//extern gen2Cap_info_t gen2Cap_info; //新的超级电容控制板
 
 //unsigned char UI_Seq;     //包序号
 ////uint32_t temp_time_check_RTOS = 0;
@@ -842,17 +842,17 @@
 ////			 ui_info.cap_volt = superCap_info.VBKelvin_fromCap;
 ////		 }
 ////	 }
-////	 else if(current_superCap == sCap23_ID)
+////	 else if(current_superCap == gen2Cap_ID)
 ////	 {
-////		 if(toe_is_error(SCAP_23_TOR))
+////		 if(toe_is_error(GEN2CAP_TOE))
 ////		 {
 ////			 ui_info.cap_pct = 0.0f;
 ////			 ui_info.cap_volt = 0.0f;
 ////		 }
 ////		 else
 ////		 {
-////			 ui_info.cap_pct = sCap23_info.EBPct;
-////		   ui_info.cap_volt = sCap23_info.Vbank_f;
+////			 ui_info.cap_pct = gen2Cap_info.EBPct;
+////		   ui_info.cap_volt = gen2Cap_info.Vbank_f;
 ////		 }
 ////	 }
 ////	 else

@@ -315,7 +315,7 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 	}
 	
 	// 按照gen3 超级电容反馈的当前最大能补足的功率上限
-	fp32 gen3cap_Pmax = fp32_constrain(cpc_get_gen3Cap_Pmax(), 
+	//fp32 gen3cap_Pmax = fp32_constrain(cpc_get_gen3Cap_Pmax(), 
 	
 	//分层 根据裁判系统缓冲能量 计算当前可用功率上限
 	if(direct_connect_e_cont.chassis_power_buffer >= WARNING_ENERGY_BUFF)

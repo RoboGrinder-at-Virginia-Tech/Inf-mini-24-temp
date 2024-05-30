@@ -327,9 +327,9 @@ static void detect_init(uint32_t time)
 		error_list[ZIDACAP_TOE].solve_data_error_fun = NULL;
 		
 		//SZL 12-27-2022 易林新超级电容
-		error_list[SCAP_23_TOR].data_is_error_fun = sCap23_is_data_error_proc;
-		error_list[SCAP_23_TOR].solve_lost_fun = sCap23_offline_proc;
-		error_list[SCAP_23_TOR].solve_data_error_fun = NULL;
+		error_list[GEN2CAP_TOE].data_is_error_fun = gen2Cap_is_data_error_proc;
+		error_list[GEN2CAP_TOE].solve_lost_fun = gen2Cap_offline_proc;
+		error_list[GEN2CAP_TOE].solve_data_error_fun = NULL;
 		
 		//SZL 3-19-2024 PR新超级电容
 		error_list[GEN3CAP_TOE].data_is_error_fun = gen3Cap_is_data_error_proc;
