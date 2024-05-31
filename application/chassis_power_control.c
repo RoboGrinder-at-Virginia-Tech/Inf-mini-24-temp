@@ -285,6 +285,13 @@ void gen2_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 
 }
 
+// 第三代超级电容 裁判系统离线的情况下工况
+void gen3_superCap_ref_sys_error_case_sacpc(chassis_move_t *chassis_power_control)
+{
+	
+}
+
+// 第三代超级电容 正常工况下 底盘功率控制
 void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
 {
 	//fp32 current_scale;
@@ -371,13 +378,17 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 	
 	//裁判系统缓冲能量: 分层 根据裁判系统缓冲能量 计算当前可用功率上限
 	if(cpc_buffer_energy.chassis_power_buffer >= WARNING_ENERGY_BUFF)
-	{//功率限制
-//			cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_buffer - MINIMUM_ENERGY_BUFF) / CHASSIS_REFEREE_COMM_TIME;
-		cpc_buffer_energy.p_max = MAX_POWER_VALUE;
+	{
+		//功率限制 老代码 
+////			cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_buffer - MINIMUM_ENERGY_BUFF) / CHASSIS_REFEREE_COMM_TIME;
+//		cpc_buffer_energy.p_max = MAX_POWER_VALUE;
+//		
+//		cpc_buffer_energy.p_max = fp32_constrain(cpc_buffer_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, MAX_POWER_VALUE);//最大功率的 限制
+//		//convert p_max to total_current_limit for esc raw values
+//		cpc_buffer_energy.total_current_limit = (fp32)cpc_buffer_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
 		
-		cpc_buffer_energy.p_max = fp32_constrain(cpc_buffer_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, MAX_POWER_VALUE);//最大功率的 限制
-		//convert p_max to total_current_limit for esc raw values
-		cpc_buffer_energy.total_current_limit = (fp32)cpc_buffer_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+		// 缓冲能量大时, 使用上述计算的电流限制
+		cpc_buffer_energy.total_current_limit = cpc_cap_energy.total_current_limit;
 	}
 	else if(cpc_buffer_energy.chassis_power_buffer > MINIMUM_ENERGY_BUFF && cpc_buffer_energy.chassis_power_buffer < WARNING_ENERGY_BUFF)
 	{//直接电流限制; 这样比较方便; 减缓
@@ -407,16 +418,8 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 	
 	/*---完成 动态变动的数据 的更新---*/
 	
-	/*先处理 裁判系统离线的情况---就只限制输出功率*/
-	if(toe_is_error(REFEREE_TOE))
-	{
-		//就按找一个功率来限制就行了; 设备离线; 特殊情况下 的数据更新
-		cpc_buffer_energy.p_max = REFEREE_OFFLINE_POWER_LIM_VAL;
-		cpc_buffer_energy.p_max = fp32_constrain(cpc_buffer_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, REFEREE_OFFLINE_POWER_LIM_VAL);
-		cpc_buffer_energy.total_current_limit = (fp32)cpc_buffer_energy.p_max / 24.0f * 1000.0f;
-		
-		//calculate pid
-		/*调试时发现的一个现象: PID算法; set=0; fdb=0; error=0; 由于I项, Iout=922; out=530.809
+	/*这里不处理 裁判系统离线的情况*/
+	/*调试时发现的一个现象: PID算法; set=0; fdb=0; error=0; 由于I项, Iout=922; out=530.809
 			即total_current=1500~3000时 底盘 极低功率; 
 			测试数据: 裁判系统离线时如果 p_max = 100 -> total_current_limit=2083.3; total_current = 3630.90; 操作界面显示的chassis_power = 3.5w;
 		
@@ -431,29 +434,9 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 		
 			------ 第一个问题怎么解决呢? ------ 目前暂时把REFEREE_OFFLINE_POWER_LIM_VAL设高
 		*/
-		for (uint8_t i = 0; i < 4; i++)
-		{
-				PID_calc(&chassis_power_control->motor_speed_pid[i], chassis_power_control->motor_chassis[i].speed, chassis_power_control->motor_chassis[i].speed_set);
-		}
-			
-		cpc_buffer_energy.total_current = 0.0f;
-		//calculate the original motor current set
-		//计算原本电机电流设定
-		for(uint8_t i = 0; i < 4; i++)
-		{
-				cpc_buffer_energy.total_current += fabs(chassis_power_control->motor_speed_pid[i].out);
-		}
-		
-		if(cpc_buffer_energy.total_current > cpc_buffer_energy.total_current_limit)
-		{
-			current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
-			chassis_power_control->motor_speed_pid[0].out*=current_scale;
-			chassis_power_control->motor_speed_pid[1].out*=current_scale;
-			chassis_power_control->motor_speed_pid[2].out*=current_scale;
-			chassis_power_control->motor_speed_pid[3].out*=current_scale;
-		}
-	}/*开始 分段常数控制器 + 速度自适应的功率控制*/
-	else if(cpc_buffer_energy.chassis_power_buffer < cpc_buffer_energy.critical_power_buffer)
+	
+	/*开始 分段常数控制器 + 速度自适应的功率控制*/
+	if(cpc_buffer_energy.chassis_power_buffer < cpc_buffer_energy.critical_power_buffer)
 	{//when below critical pt; just cut-off output
 		chassis_power_control->motor_speed_pid[0].out = 0.0f;
 		chassis_power_control->motor_speed_pid[1].out = 0.0f;
