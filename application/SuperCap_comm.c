@@ -34,7 +34,7 @@ CAN_TxHeaderTypeDef  gen3Cap_tx_message;
 supercap_can_msg_id_e current_superCap; // 表明当前使用的是哪一个超级电容
 
 uint32_t any_Cap_can_msg_send_TimeStamp = 0;
-const uint16_t any_Cap_can_msg_send_sendFreq = 100;
+const uint16_t any_Cap_can_msg_send_sendPeriod = 100;
 
 /*  功能 计算 辅助函数 */
 
@@ -70,7 +70,7 @@ void superCap_comm_bothway_init()
 void superCap_control_loop()
 {
 	//发送任务计时, 时间到了开始一次发送
-	if(xTaskGetTickCount() - any_Cap_can_msg_send_sendFreq > any_Cap_can_msg_send_TimeStamp)
+	if(xTaskGetTickCount() - any_Cap_can_msg_send_TimeStamp > any_Cap_can_msg_send_sendPeriod)
 	{
 		any_Cap_can_msg_send_TimeStamp = xTaskGetTickCount(); //更新时间戳 
 			
@@ -186,17 +186,19 @@ void superCap_control_loop()
 			if(toe_is_error(REFEREE_TOE))
 			{
 				gen3Cap_info.power_management_chassis_output = 1;// 默认开机 此变量用于调试
+				gen3Cap_info.buffer_energy = 0;
 			} else {
 				gen3Cap_info.power_management_chassis_output = get_chassis_power_output_status();
+				gen3Cap_info.buffer_energy = get_chassis_buffer_energy();
 			}
 			
 			if(gen3Cap_info.power_management_chassis_output)
 			{
 				gen3Cap_info.dcdc_enable = 1;
-				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
+				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode, gen3Cap_info.buffer_energy);
 			} else {
 				gen3Cap_info.dcdc_enable = 0;
-				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode);
+				CAN_command_gen3Cap(gen3Cap_info.charge_pwr_command, gen3Cap_info.fail_safe_charge_pwr_command, gen3Cap_info.dcdc_enable, gen3Cap_info.dcdc_mode, gen3Cap_info.buffer_energy);
 			}
 		}
 		else if(current_superCap == gen2Cap_ID)
@@ -301,7 +303,7 @@ void CAN_command_gen2Cap(uint8_t max_pwr, uint8_t fail_safe_pwr)
     HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen2Cap_tx_message, gen2Cap_can_send_data, &send_mail_box);
 }
 
-void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode)
+void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode, uint16_t buffer_energy)
 {
 		uint32_t send_mail_box;
     gen3Cap_tx_message.StdId = RMTypeC_Master_Command_ID_for_gen3Cap;
@@ -312,8 +314,11 @@ void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_en
     gen3Cap_can_send_data[1] = fail_safe_pwr;
     gen3Cap_can_send_data[2] = dcdc_enable;
     gen3Cap_can_send_data[3] = dcdc_mode;
-    gen3Cap_can_send_data[4] = 0; 
-    gen3Cap_can_send_data[5] = 0; 
+	  // 将 buffer_energy 的低字节赋值给数组的第 4 个位置
+    gen3Cap_can_send_data[4] = (uint8_t)(buffer_energy & 0xFF);
+	  // 将 buffer_energy 的高字节赋值给数组的第 5 个位置
+		gen3Cap_can_send_data[5] = (uint8_t)(buffer_energy >> 8);
+	 
     gen3Cap_can_send_data[6] = 0; 
     gen3Cap_can_send_data[7] = 0; 
     HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);

@@ -142,6 +142,7 @@ typedef struct
 	uint8_t fail_safe_charge_pwr_command; //P-failsafe
 	uint8_t dcdc_enable;
 	uint8_t dcdc_mode;
+	uint16_t buffer_energy; // 从裁判系统获取的buffer energy
 	
 	//接收到的 经过转换后的数据
 	fp32 PowerData[3];
@@ -192,7 +193,7 @@ extern fp32 cal_capE_relative_pct(fp32 curr_vol, fp32 min_vol, fp32 max_vol);
 
 extern void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr);
 extern void CAN_command_gen2Cap(uint8_t max_pwr, uint8_t fail_safe_pwr);
-extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode);
+extern void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_enable, uint8_t dcdc_mode, uint16_t buffer_energy);
 extern void CAN_command_wulieCap(uint16_t temPower);
 extern void superCap_offline_proc(void);
 extern bool_t superCap_is_data_error_proc(void);
