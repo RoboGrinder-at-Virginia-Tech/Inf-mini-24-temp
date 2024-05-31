@@ -214,6 +214,7 @@ extern bool_t gen3Cap_is_data_error_proc(void);
 
 extern void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank);
 extern uint16_t cpc_get_superCap_charge_pwr(void);
+extern fp32 cpc_get_gen3Cap_Pmax(void);
 
 extern fp32 cer_get_current_cap_boost_mode_pct_threshold(void);
 extern fp32 cer_get_current_cap_relative_pct(void);
