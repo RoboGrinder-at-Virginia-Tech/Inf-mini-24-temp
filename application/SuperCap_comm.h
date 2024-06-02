@@ -41,7 +41,7 @@ typedef enum
 	 RMTypeC_Master_Command_ID = 0x4FF,
 	
 	// TypeC到gen3Cap_ID 的CAN报文
-	RMTypeC_Master_Command_ID_for_gen3Cap = 0x3FF,
+	RMTypeC_Master_Command_ID_for_gen3Cap = 0x108, //0x3FF,
 	
 	//SuperCap -> TypeC时 CAN报文 即反馈报文的ID:
 	 ZiDaCap_ID = 0x500,
@@ -50,7 +50,7 @@ typedef enum
 	 gen2Cap_ID = 0x501,
 	
 	 //彭睿 第三代超级电容 -> TypeC
-	 gen3Cap_ID = 0x503,
+	 gen3Cap_ID = 0x109, //0x503
 	
 	//雾列的控制板
 	//TypeC -> wulie Cap

@@ -350,7 +350,7 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 	else if(cpc_cap_energy.superCap_vol > gen3Cap_MINIMUM_VOL && cpc_cap_energy.superCap_vol < gen3Cap_WARNING_VOL)
 	{//功率限制
 		//cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_buffer - MINIMUM_ENERGY_BUFF) / CHASSIS_REFEREE_COMM_TIME;
-		cpc_cap_energy.p_max = gen3Cap_LARGE_POWER_VALUE;
+		cpc_cap_energy.p_max = gen3Cap_MEDIUM_POWER_VALUE;
 		
 		cpc_cap_energy.p_max = fp32_constrain(cpc_cap_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, gen3Cap_MAX_POWER_VALUE);//最大功率的 限制
 		//convert p_max to total_current_limit for esc raw values
@@ -361,12 +361,25 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 	}
 	else
 	{//功率限制
-		//缓冲能量达到或者小于危险值了, debuff电流上限
-		fp32 power_scale = cpc_cap_energy.superCap_vol / gen3Cap_WARNING_VOL;
-		map_superCap_charge_pwr_to_debuff_total_current_limit(cpc_cap_energy.superCap_charge_pwr, &(cpc_cap_energy.buffer_debuff_total_current_limit));//fp32 buffer_debuff_total_current_limit;
-		cpc_cap_energy.total_current_limit = cpc_cap_energy.buffer_debuff_total_current_limit * power_scale;
-		//反着更新 p_max
-		cpc_cap_energy.p_max = cpc_cap_energy.total_current_limit / 1000.0f * 24.0f;
+		// 依然按照一个 功率限制来限幅 目前就按照超级电容下发功率来
+		cpc_cap_energy.p_max = gen3Cap_SMALL_POWER_VALUE;
+		//cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_limit + 10.0f); // uncomment会用上最后一段缓冲能量
+		
+		cpc_cap_energy.p_max = fp32_constrain(cpc_cap_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, gen3Cap_MAX_POWER_VALUE);//最大功率的 限制
+		//convert p_max to total_current_limit for esc raw values
+		cpc_cap_energy.cap_vol_cali_total_current_limit = (fp32)cpc_cap_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+		
+		// 此融合用 两者最小值 可修改
+		cpc_cap_energy.total_current_limit = CPC_MIN(cpc_cap_energy.cap_vol_cali_total_current_limit, cpc_cap_energy.gen3cap_spt_total_current_limit);
+		//cpc_cap_energy.total_current_limit = cpc_cap_energy.cap_vol_cali_total_current_limit; // uncomment会用上最后一段缓冲能量
+		
+//		// 6-1-2024 经过测试 该debuff限幅过了
+//		//缓冲能量达到或者小于危险值了, debuff电流上限
+//		fp32 power_scale = cpc_cap_energy.superCap_vol / gen3Cap_WARNING_VOL;
+//		map_superCap_charge_pwr_to_debuff_total_current_limit(cpc_cap_energy.superCap_charge_pwr, &(cpc_cap_energy.buffer_debuff_total_current_limit));//fp32 buffer_debuff_total_current_limit;
+//		cpc_cap_energy.total_current_limit = cpc_cap_energy.buffer_debuff_total_current_limit * power_scale;
+//		//反着更新 p_max
+//		cpc_cap_energy.p_max = cpc_cap_energy.total_current_limit / 1000.0f * 24.0f;
 		
 //		// !!第二代超级电容功能!! 保证当前底盘输出功率 小于等于 裁判系统的功率上限
 //		cpc_cap_energy.p_max = (fp32)cpc_cap_energy.superCap_charge_pwr - 4.0f; //(fp32)chassis_e_ctrl.chassis_power_limit - 4.0f;

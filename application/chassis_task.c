@@ -831,11 +831,24 @@ const chassis_move_t *get_chassis_pointer(void)
 	return &chassis_move;
 }
 
-/* ---------- getter method 获取最终解包到 chassis_task/chassis_move 中的数据 ---------- */
-//uint8_t get_turboMode()
-//{
-//	return turboMode;
-//}
+/* ---------- chassis module getter method ---------- */
+chassis_mode_e get_chassis_mode(void)
+{
+	return chassis_move.chassis_mode;
+}
 
+chassis_mode_e get_last_chassis_mode(void)
+{
+	return chassis_move.last_chassis_mode;
+}
 
+chassis_energy_mode_e get_chassis_energy_mode(void)
+{
+	return chassis_move.chassis_energy_mode;
+}
+
+chassis_energy_mode_e get_last_chassis_energy_mode(void)
+{
+	return chassis_move.last_chassis_energy_mode;
+}
 /* ---------- getter method end ---------- */

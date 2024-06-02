@@ -34,7 +34,7 @@ CAN_TxHeaderTypeDef  gen3Cap_tx_message;
 supercap_can_msg_id_e current_superCap; // 表明当前使用的是哪一个超级电容
 
 uint32_t any_Cap_can_msg_send_TimeStamp = 0;
-const uint16_t any_Cap_can_msg_send_sendPeriod = 100;
+const uint16_t any_Cap_can_msg_send_sendPeriod = 50;
 
 /*  功能 计算 辅助函数 */
 

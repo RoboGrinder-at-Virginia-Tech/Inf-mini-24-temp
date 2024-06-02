@@ -79,8 +79,8 @@ buffer_debuff_total_current_limit 代表了这种情况下允许的 最大 功率(极限)
 /*speed-adaptive chassis power control 相关参数*/
 #define gen3Cap_WARNING_ENERGY_BUFF 1200.0f //1500.0f deprecated
 #define gen3Cap_MINIMUM_ENERGY_BUFF 750.0f //700.0f deprecated
-#define gen3Cap_WARNING_VOL 20.0f //对应superCap_WARNING_ENERGY_BUFF
-#define gen3Cap_MINIMUM_VOL 15.81f //superCap_MINIMUM_ENERGY_BUFF
+#define gen3Cap_WARNING_VOL 13.0f //20.0f //对应superCap_WARNING_ENERGY_BUFF
+#define gen3Cap_MINIMUM_VOL 6.5f //15.81f //superCap_MINIMUM_ENERGY_BUFF
 
 #define gen3Cap_MAX_POWER_VALUE 400.0f//300.0f
 #define gen3Cap_LARGE_POWER_VALUE 300.0f

@@ -267,5 +267,8 @@ extern void chassis_task(void const *pvParameters);
 /*SZL 1-25 add get chassis_move pointer*/
 extern const chassis_move_t *get_chassis_pointer(void);
 
-extern uint8_t get_turboMode(void);
+extern chassis_mode_e get_chassis_mode(void);
+extern chassis_mode_e get_last_chassis_mode(void);
+extern chassis_energy_mode_e get_chassis_energy_mode(void);
+extern chassis_energy_mode_e get_last_chassis_energy_mode(void);
 #endif
