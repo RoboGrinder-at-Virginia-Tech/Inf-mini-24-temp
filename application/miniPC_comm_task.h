@@ -20,14 +20,14 @@ note 1-17-2023: current data size did not exceed 50 bytes
 */
 
 //this value is used for fifo - software fifo buffer
-#define MINIPC_COMM_RX_FIFO_BUF_LENGTH 128 //1024
+#define MINIPC_COMM_RX_FIFO_BUF_LENGTH 256
 
 //This is the DMA buff length
-#define MINIPC_COMM_UART_DMA_RX_BUF_LENGHT 50 //512
+#define MINIPC_COMM_UART_DMA_RX_BUF_LENGHT 140 // 整帧长度最多 136
 
 #define PC_HEADER_SOF 0xAF
 //size for the protocal unpack array - ram buffer
-#define PC_PROTOCOL_FRAME_MAX_SIZE  50 //128
+#define PC_PROTOCOL_FRAME_MAX_SIZE  136
 
 //Information for different packages' size
 #define PC_PROTOCOL_HEADER_SIZE            sizeof(pc_comm_frame_header_t) //4
@@ -51,6 +51,7 @@ typedef enum
 		//Embeded-->PC
     BASE_INFO_CMD_ID = 0x0204,
     GIMBAL_INFO_CMD_ID = 0x0304,
+		REFEREE_INFO_CMD_ID = 0xF001,
 	
 		//PC-->Embeded
     CHASSIS_REL_CTRL_CMD_ID = 0x1206,

@@ -193,14 +193,24 @@ heat0_limit; heat0指的id1的17mm shooter
 */
 void get_shooter_id1_17mm_heat_limit_and_heat(uint16_t *heat0_limit, uint16_t *heat0)
 {
-    *heat0_limit = robot_status.shooter_barrel_heat_limit;
-    *heat0 = power_heat_data.shooter_17mm_1_barrel_heat;
+	if(heat0_limit == NULL || heat0 == NULL)
+	{
+		return;
+	}
+    
+	*heat0_limit = robot_status.shooter_barrel_heat_limit;
+  *heat0 = power_heat_data.shooter_17mm_1_barrel_heat;
 }
 
 void get_shooter_id2_17mm_heat_limit_and_heat(uint16_t *heat1_limit, uint16_t *heat1)
 {
-    *heat1_limit = robot_status.shooter_barrel_heat_limit;
-    *heat1 = power_heat_data.shooter_17mm_2_barrel_heat;
+	if(heat1_limit == NULL || heat1 == NULL)
+	{
+		return;
+	}
+  
+	*heat1_limit = robot_status.shooter_barrel_heat_limit;
+  *heat1 = power_heat_data.shooter_17mm_2_barrel_heat;
 }
 
 uint16_t get_chassis_power_limit(void)
@@ -223,6 +233,11 @@ uint16_t get_shooter_id1_17mm_cd_rate(void)
 		return robot_status.shooter_barrel_cooling_value;
 }
 
+uint16_t get_shooter_id2_17mm_cd_rate(void)
+{
+		return robot_status.shooter_barrel_cooling_value;
+}
+
 uint32_t get_last_robot_state_rx_timestamp(void)
 {
 	return last_robot_state_rx_timestamp;
@@ -231,4 +246,35 @@ uint32_t get_last_robot_state_rx_timestamp(void)
 uint8_t get_chassis_power_output_status(void)
 {
     return robot_status.power_management_chassis_output; //0为无输出, 1为24v
+}
+
+uint8_t get_game_state_game_type(void)
+{
+	return game_state.game_type;
+}
+
+uint8_t get_game_state_game_progress(void)
+{
+	return game_state.game_progress;
+}
+
+uint16_t get_game_state_stage_remain_time(void)
+{
+	return game_state.stage_remain_time;
+}
+
+void get_current_and_max_hp(uint16_t *current_HP, uint16_t *maximum_HP)
+{
+	if(current_HP == NULL || maximum_HP == NULL)
+	{
+		return;
+	}
+	
+	*current_HP = robot_status.current_HP;
+	*maximum_HP = robot_status.maximum_HP;
+}
+
+game_robot_HP_t* get_game_robot_HP_ptr(void)
+{
+	return &game_robot_HP;
 }
