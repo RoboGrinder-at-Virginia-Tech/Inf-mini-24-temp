@@ -576,21 +576,21 @@ static void shoot_set_mode(void)
 		//或 即按键只能开启aim
 		if(shoot_control.key_X_cnt == 0)
 		{
-			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
+			set_auto_aim_mode(AUTO_AIM_OFF); //miniPC_info.autoAimFlag = 0;
 		}
 		else if(shoot_control.key_X_cnt == 1) 
 		{
-			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
+			set_auto_aim_mode(AUTO_AIM_AID); //miniPC_info.autoAimFlag = 1;
 		}
 		else if(shoot_control.key_X_cnt == 2)
 		{
 			//miniPC_info.autoAimFlag = 2;
-			set_autoAimFlag(1); //miniPC_info.autoAimFlag = 1;
+			set_auto_aim_mode(AUTO_AIM_AID); //miniPC_info.autoAimFlag = 1;
 		}
 		
 		if(shoot_control.press_r_time == PRESS_LONG_TIME_R || shoot_control.press_key_V_time == PRESS_LONG_TIME_V)
 		{
-			set_autoAimFlag(2); //miniPC_info.autoAimFlag = 2;
+			set_auto_aim_mode(AUTO_AIM_LOCK); //miniPC_info.autoAimFlag = 2;
 			//shoot_control.key_X_cnt = 2;
 		}
 //		else
@@ -601,7 +601,7 @@ static void shoot_set_mode(void)
 		
 		if(shoot_control.shoot_rc[TEMP].key[KEY_PRESS].c) // press C to turn off auto aim
 		{
-			set_autoAimFlag(0); //miniPC_info.autoAimFlag = 0;
+			set_auto_aim_mode(AUTO_AIM_OFF); //miniPC_info.autoAimFlag = 0;
 			shoot_control.key_X_cnt = 0;
 		}
 		//X按键计数以及相关检测结束
@@ -622,7 +622,7 @@ static void shoot_set_mode(void)
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
-					else if( ( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) )
+					else if( ( (get_shootCommand() == 0xff) && (get_auto_aim_mode() > 0) ) )
 					{
 						shoot_control.shoot_mode = SHOOT_3_BULLET;
 						shoot_control.burst_counter = 0;
@@ -640,7 +640,7 @@ static void shoot_set_mode(void)
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}
-					else if(( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ))
+					else if(( (get_shootCommand() == 0xff) && (get_auto_aim_mode() > 0) ))
 					{
 						shoot_control.shoot_mode = SHOOT_3_BULLET;
 						shoot_control.burst_counter = 0;
@@ -654,7 +654,7 @@ static void shoot_set_mode(void)
 				else
 				{
 					// default case
-					if (( (get_shootCommand() == 0xff) && (get_autoAimFlag() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
+					if (( (get_shootCommand() == 0xff) && (get_auto_aim_mode() > 0) ) || (shoot_control.rc_s_time == RC_S_LONG_TIME))
 					{
 							shoot_control.shoot_mode = SHOOT_CONTINUE_BULLET;
 					}

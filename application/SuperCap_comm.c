@@ -13,10 +13,10 @@
 extern CAN_HandleTypeDef hcan1;
 extern CAN_HandleTypeDef hcan2;
 
-void superCap_offline_proc(void);
+void zidaCap_offline_proc(void);
 
 //static CAN_TxHeaderTypeDef  superCap_tx_message;
-static uint8_t              superCap_can_send_data[8];
+static uint8_t              zidaCap_can_send_data[8];
 static uint8_t              wulieCap_can_send_data[8];
 static uint8_t              gen2Cap_can_send_data[8];
 static uint8_t              gen3Cap_can_send_data[8];
@@ -26,7 +26,7 @@ wulieCap_info_t wulieCap_info;//  雾列超级电容控制板的结构体
 gen2Cap_info_t gen2Cap_info; // PR YiLin 2023 Seattle 超级电容控制板
 gen3Cap_info_t gen3Cap_info; // 第三代超级电容
 
-CAN_TxHeaderTypeDef  superCap_tx_message;
+CAN_TxHeaderTypeDef  zidaCap_tx_message;
 CAN_TxHeaderTypeDef  wulieCap_tx_message;
 CAN_TxHeaderTypeDef  gen2Cap_tx_message;
 CAN_TxHeaderTypeDef  gen3Cap_tx_message;
@@ -157,7 +157,7 @@ void superCap_control_loop()
 			zidaCap_info.max_charge_pwr_command = 10;//2.5f;// 40 档 offset 2.5f
 			zidaCap_info.fail_safe_charge_pwr_command = zidaCap_info.max_charge_pwr_command;
 				
-			CAN_command_superCap(zidaCap_info.max_charge_pwr_command, zidaCap_info.fail_safe_charge_pwr_command);	
+			CAN_command_zidaCap(zidaCap_info.max_charge_pwr_command, zidaCap_info.fail_safe_charge_pwr_command);	
 		}
 		else if(current_superCap == gen3Cap_ID)
 		{
@@ -324,22 +324,22 @@ void CAN_command_gen3Cap(uint8_t max_pwr, uint8_t fail_safe_pwr, uint8_t dcdc_en
     HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &gen3Cap_tx_message, gen3Cap_can_send_data, &send_mail_box);
 }
 
-void CAN_command_superCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
+void CAN_command_zidaCap(uint8_t max_pwr, uint8_t fail_safe_pwr)
 {
 		uint32_t send_mail_box;
-    superCap_tx_message.StdId = RMTypeC_Master_Command_ID;
-    superCap_tx_message.IDE = CAN_ID_STD;
-    superCap_tx_message.RTR = CAN_RTR_DATA;
-    superCap_tx_message.DLC = 0x08;
-    superCap_can_send_data[0] = max_pwr;
-    superCap_can_send_data[1] = fail_safe_pwr;
-    superCap_can_send_data[2] = 0;
-    superCap_can_send_data[3] = 0;
-    superCap_can_send_data[4] = 0; 
-    superCap_can_send_data[5] = 0; 
-    superCap_can_send_data[6] = 0; 
-    superCap_can_send_data[7] = 0; 
-    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &superCap_tx_message, superCap_can_send_data, &send_mail_box);
+    zidaCap_tx_message.StdId = RMTypeC_Master_Command_ID;
+    zidaCap_tx_message.IDE = CAN_ID_STD;
+    zidaCap_tx_message.RTR = CAN_RTR_DATA;
+    zidaCap_tx_message.DLC = 0x08;
+    zidaCap_can_send_data[0] = max_pwr;
+    zidaCap_can_send_data[1] = fail_safe_pwr;
+    zidaCap_can_send_data[2] = 0;
+    zidaCap_can_send_data[3] = 0;
+    zidaCap_can_send_data[4] = 0; 
+    zidaCap_can_send_data[5] = 0; 
+    zidaCap_can_send_data[6] = 0; 
+    zidaCap_can_send_data[7] = 0; 
+    HAL_CAN_AddTxMessage(&SUPERCAP_CAN, &zidaCap_tx_message, zidaCap_can_send_data, &send_mail_box);
 }
 
 void CAN_command_wulieCap(uint16_t temPower)
@@ -363,14 +363,14 @@ void CAN_command_wulieCap(uint16_t temPower)
 /* TOE 模块层 功能函数*/
 
 //返回数据相关
-void superCap_offline_proc()
+void zidaCap_offline_proc()
 {
 		zidaCap_info.status = superCap_offline;
 		
 	
 }
 
-bool_t superCap_is_data_error_proc()
+bool_t zidaCap_is_data_error_proc()
 {
 		zidaCap_info.status = superCap_online;
 	
@@ -387,7 +387,7 @@ bool_t superCap_is_data_error_proc()
 		}
 }
 
-void superCap_solve_data_error_proc()
+void zidaCap_solve_data_error_proc()
 {
 		//因为其数值可能超过100 所以暂时把这个功能屏蔽掉 ICRA
 //		if(zidaCap_info.data_EBPct_status == SuperCap_dataIsError)
@@ -411,21 +411,6 @@ bool_t gen2Cap_is_data_error_proc()
 		gen2Cap_info.status = superCap_online;
 		//永远 return 0;
 		return 0;
-//		//ICRA
-//		//只判断EBPct_fromCap，因为只用这个, 这个是0% 这种 并不是0.0 - 100.0
-//		//注意EBPct是可能超过100%的所以暂时把检查数据是否出错改成这个样子 -100.0 ~ 200.0
-//		//下面的superCap_solve_data_error_proc也有更改
-//		if(zidaCap_info.EBPct_fromCap < -100.0f || zidaCap_info.EBPct_fromCap > 200.0f)
-//		{
-//			zidaCap_info.data_EBPct_status = SuperCap_dataIsError;
-//			return 1;
-//			
-//		}
-//		else
-//		{
-//			zidaCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
-//			return 0;
-//		}
 }
 
 //以下为彭睿第三代超级电容相关
@@ -453,21 +438,6 @@ bool_t wulieCap_is_data_error_proc()
 		wulieCap_info.status = superCap_online;
 		//永远 return 0;
 		return 0;
-//		//ICRA
-//		//只判断EBPct_fromCap，因为只用这个, 这个是0% 这种 并不是0.0 - 100.0
-//		//注意EBPct是可能超过100%的所以暂时把检查数据是否出错改成这个样子 -100.0 ~ 200.0
-//		//下面的superCap_solve_data_error_proc也有更改
-//		if(zidaCap_info.EBPct_fromCap < -100.0f || zidaCap_info.EBPct_fromCap > 200.0f)
-//		{
-//			zidaCap_info.data_EBPct_status = SuperCap_dataIsError;
-//			return 1;
-//			
-//		}
-//		else
-//		{
-//			zidaCap_info.data_EBPct_status = SuperCap_dataIsCorrect;
-//			return 0;
-//		}
 }
 
 /* 给各个使用 supercap 的模块的功能函数 */

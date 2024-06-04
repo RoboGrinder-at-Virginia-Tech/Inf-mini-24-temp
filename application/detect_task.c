@@ -260,9 +260,6 @@ const error_t *get_error_list_point(void)
 }
 
 extern void OLED_com_reset(void);
-extern void superCap_offline_proc(void);
-extern bool_t superCap_is_data_error_proc(void);
-extern void superCap_solve_data_error_proc(void);
 extern void pc_offline_proc(void);
 extern bool_t pc_is_data_error_proc(void);
 
@@ -322,8 +319,8 @@ static void detect_init(uint32_t time)
     error_list[OLED_TOE].solve_data_error_fun = NULL;
 		
 		//SZL 3-12-2022
-		error_list[ZIDACAP_TOE].data_is_error_fun = superCap_is_data_error_proc;
-		error_list[ZIDACAP_TOE].solve_lost_fun = superCap_offline_proc;
+		error_list[ZIDACAP_TOE].data_is_error_fun = zidaCap_is_data_error_proc;
+		error_list[ZIDACAP_TOE].solve_lost_fun = zidaCap_offline_proc;
 		error_list[ZIDACAP_TOE].solve_data_error_fun = NULL;
 		
 		//SZL 12-27-2022 易林新超级电容

@@ -26,7 +26,8 @@ RM自定义UI协议
 #include <string.h>
 
 // 动态UI的刷新频率
-const uint16_t ui_dynamic_crt_send_period = 250; //500; //5000
+const uint16_t dynamic_ui_send_period = 250; //500; //5000
+const uint16_t static_ui_send_period = 250; //500; //5000
 
 /** ---- 以下为 静态UI ---- **/
 // 瞄准线, infantry only keep gAimVertL and gAimHorizL8m
@@ -165,26 +166,24 @@ static void chassis_frame_UI_arm_cal(fp32 angle)
 
 
 /* ---------------------------- 机器人error code - helper function 开始 ---------------------------- */
-static void ui_error_flag_clear()
-{
-	ui_info.chassis_error_flag = devOK; //初始化为删除
-	ui_info.gimbal_error_flag = devOK; //初始化为删除
-	ui_info.shoot_error_flag = devOK; //初始化为删除
-	ui_info.superCap_error_flag = devOK; //初始化为删除
-}
-
-static void ui_error_code_str_clear()
-{	
-	strcpy(ui_info.chassis_error_code, "\0");
-	strcpy(ui_info.gimbal_error_code, "\0");
-	strcpy(ui_info.shoot_error_code, "\0");
-	strcpy(ui_info.superCap_error_code, "\0");
-}
+// 没有
 /* ---------------------------- 机器人error code - helper function结束 ---------------------------- */
+
+void UI_init(Referee_Interactive_info_t* Referee_Interactive_info)
+{
+	ui_info.Referee_Interactive_info = Referee_Interactive_info;
+	
+	// 初始化矩阵计算
+	chassis_frame_UI_sensor_and_graph_init();
+	chassis_frame_UI_sensor_update();
+	chassis_frame_UI_arm_init(ui_info.yaw_relative_angle);
+}
 
 // This function draws the static UI
 void static_UI_func()
 {
+	
+	/* ---------------------------- 先画 全部的静态 UI ---------------------------- */
 	// 底盘状态 静态字符
 	Char_Draw(&strChassisSts, "010", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 10, 3, CHASSIS_STS_X, CHASSIS_STS_Y, "NORM BOOST");
 	Char_Draw(&strSPINSts, "011", UI_Graph_ADD, 2, UI_Color_Yellow, 20, 9, 3, SPIN_STS_X, SPIN_STS_Y,           "FOLL SPIN");
@@ -230,44 +229,368 @@ void static_UI_func()
 	// 超级电容 容量静态外框
 	Rectangle_Draw(&superCapFrame, "025", UI_Graph_ADD, 3, UI_Color_Main, 3, Center_Bottom_SuperCap_Frame_Start_X, Center_Bottom_SuperCap_Frame_Start_Y, Center_Bottom_SuperCap_Frame_End_X, Center_Bottom_SuperCap_Frame_End_Y);
 	
-	//底盘对位线 静态线条
+	//底盘 对位线计算 初始化 左
+	ui_info.chassis_drive_pos_line_left_slope_var = Chassis_Drive_Pos_Line_Left_Slope;
+	ui_info.chassis_drive_pos_line_left_var_startX = Chassis_Drive_Pos_Line_Left_Start_X;
+	ui_info.chassis_drive_pos_line_left_var_startY = Chassis_Drive_Pos_Line_Left_Start_Y;
+	ui_info.chassis_drive_pos_line_left_var_endX = Chassis_Drive_Pos_Line_Left_End_X;
+		
+	//底盘 对位线计算 初始化 右
+	ui_info.chassis_drive_pos_line_right_slope_var = Chassis_Drive_Pos_Line_Right_Slope;
+	ui_info.chassis_drive_pos_line_right_var_startX = Chassis_Drive_Pos_Line_Right_Start_X;
+	ui_info.chassis_drive_pos_line_right_var_startY = Chassis_Drive_Pos_Line_Right_Start_Y;
+	ui_info.chassis_drive_pos_line_right_var_endX = Chassis_Drive_Pos_Line_Right_End_X;
 	ui_info.chassis_drive_pos_line_left_var_endY = ((fp32) (ui_info.chassis_drive_pos_line_left_var_endX - ui_info.chassis_drive_pos_line_left_var_startX) ) * ui_info.chassis_drive_pos_line_left_slope_var + ui_info.chassis_drive_pos_line_left_var_startY;
 	ui_info.chassis_drive_pos_line_right_var_endY = ((fp32) (ui_info.chassis_drive_pos_line_right_var_endX - ui_info.chassis_drive_pos_line_right_var_startX) ) * ui_info.chassis_drive_pos_line_right_slope_var + ui_info.chassis_drive_pos_line_right_var_startY;
+	//底盘对位线 静态线条
 	//Line_Draw(&chassisPosAimLeftLine, "028", UI_Graph_ADD, 3, UI_Color_Main, 5, Chassis_Drive_Pos_Line_Left_Start_X, Chassis_Drive_Pos_Line_Left_Start_Y, Chassis_Drive_Pos_Line_Left_End_X, Chassis_Drive_Pos_Line_Left_End_Y);
 	Line_Draw(&chassisPosAimLeftLine, "028", UI_Graph_ADD, 3, UI_Color_Main, 5, ui_info.chassis_drive_pos_line_left_var_startX, ui_info.chassis_drive_pos_line_left_var_startY, ui_info.chassis_drive_pos_line_left_var_endX, ui_info.chassis_drive_pos_line_left_var_endY);
 	Line_Draw(&chassisPosAimRightLine, "029", UI_Graph_ADD, 3, UI_Color_Main, 5, ui_info.chassis_drive_pos_line_right_var_startX, ui_info.chassis_drive_pos_line_right_var_startY, ui_info.chassis_drive_pos_line_right_var_endX, ui_info.chassis_drive_pos_line_right_var_endY);
+	
+	ui_info.proj_speed_limit = get_shooter_id1_17mm_speed_limit();
+	Float_Draw(&fProjSLim, "992", UI_Graph_ADD, 4, UI_Color_Main, 20, 2, 3, 240, 720, ui_info.proj_speed_limit);
+	/* ---------------------------- 结束 全部的静态 UI ---------------------------- */
+	
+	// 开始打包发送
+	Char_ReFresh(strChassisSts);
+	vTaskDelay(1);
+	Char_ReFresh(strSPINSts);
+	
+//	// 步兵只用准心
+//	UI_ReFresh(2, gAimVertL, gAimHorizL8m);
+////	UI_ReFresh(5, gAimVertL, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m); 
+////	UI_ReFresh(5, gAimHorizL8m, left8to7, left7to5, left5to4, left4to2);
+////	UI_ReFresh(2, right8to7, right7to5);
+////	UI_ReFresh(2, right5to4, right4to2);
 
+//	Char_ReFresh(strCVSts);
+//	Char_ReFresh(strGunSts);
+//	//Char_ReFresh(strProjSLimSts);
+//	
+//	UI_ReFresh(1, superCapFrame);
+
+//	UI_ReFresh(2, chassisPosAimLeftLine, chassisPosAimRightLine);
 }
 
-//void UIChangeCheck()
-//{
-//	if (_Interactive_data->chassis_mode != _Interactive_data->chassis_last_mode)
-//	{
-//			_Interactive_data->Referee_Interactive_Flag.chassis_flag = 1;
-//			_Interactive_data->chassis_last_mode = _Interactive_data->chassis_mode;
-//	}
-
-//	if (_Interactive_data->shoot_mode != _Interactive_data->shoot_last_mode)
-//	{
-//			_Interactive_data->Referee_Interactive_Flag.shoot_flag = 1;
-//			_Interactive_data->shoot_last_mode = _Interactive_data->shoot_mode;
-//	}
-//}
+// 某些特定模块发生变化 检测, 无法外部出发这些变化, 比如模块离线
+void some_mode_change_check()
+{
+	// 判断情况
+	if(toe_is_error(CHASSIS_MOTOR1_TOE) || toe_is_error(CHASSIS_MOTOR2_TOE) || toe_is_error(CHASSIS_MOTOR3_TOE) || toe_is_error(CHASSIS_MOTOR4_TOE))
+	{
+		ui_info.Referee_Interactive_info->chassis_error = 1;
+	}
+	else
+	{
+		ui_info.Referee_Interactive_info->chassis_error = 0;
+	}
+	
+	if(toe_is_error(YAW_GIMBAL_MOTOR_TOE) || toe_is_error(PITCH_GIMBAL_MOTOR_L_TOE) || toe_is_error(PITCH_GIMBAL_MOTOR_R_TOE))
+	{
+		ui_info.Referee_Interactive_info->gimbal_error = 1;
+	}
+	else
+	{
+		ui_info.Referee_Interactive_info->gimbal_error = 0;
+	}
+	
+	if(toe_is_error(TRIGGER_MOTOR17mm_R_TOE))// || toe_is_error(TRIGGER_MOTOR17mm_L_TOE))
+	{
+		ui_info.Referee_Interactive_info->shoot_error = 1;
+	}
+	else
+	{
+		ui_info.Referee_Interactive_info->shoot_error = 0;
+	}
+	
+	if(current_superCap_is_offline())
+	{
+		ui_info.Referee_Interactive_info->current_superCap_error = 1;
+	}
+	else
+	{
+		ui_info.Referee_Interactive_info->current_superCap_error = 0;
+	}
+	
+	// 判断变化
+	if(ui_info.Referee_Interactive_info->chassis_error != ui_info.Referee_Interactive_info->last_chassis_error)
+	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag = 1;
+	}
+	if(ui_info.Referee_Interactive_info->gimbal_error != ui_info.Referee_Interactive_info->last_gimbal_error)
+	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag = 1;
+	}
+	if(ui_info.Referee_Interactive_info->shoot_error != ui_info.Referee_Interactive_info->last_shoot_error)
+	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_error_flag = 1;
+	}
+	if(ui_info.Referee_Interactive_info->current_superCap_error != ui_info.Referee_Interactive_info->last_current_superCap_error)
+	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.current_superCap_error_flag = 1;
+	}
+	
+	// update all last
+	ui_info.Referee_Interactive_info->chassis_error = ui_info.Referee_Interactive_info->last_chassis_error;
+	ui_info.Referee_Interactive_info->gimbal_error = ui_info.Referee_Interactive_info->last_gimbal_error;
+	ui_info.Referee_Interactive_info->shoot_error = ui_info.Referee_Interactive_info->last_shoot_error;
+	ui_info.Referee_Interactive_info->current_superCap_error = ui_info.Referee_Interactive_info->last_current_superCap_error;
+}
 
 // This function draws the dynamic UI
-void dynamic_UI_func()
+void dynamic_UI_func(uint32_t graph_operation)
 {
-	if(ui_info.Referee_Interactive_info.Referee_Interactive_Flag.chassis_mode_flag == 1)
+	if(ui_info.Referee_Interactive_info == NULL)
 	{
+		return;
 	}
 	
-	if(ui_info.Referee_Interactive_info.Referee_Interactive_Flag.chassis_energy_mode_flag == 1)
+	if(graph_operation == UI_Graph_ADD)
 	{
+		// 把全部需要创建的flag 设置为1
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag = 1;
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag = 1;
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag = 1;
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag = 1;
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 1;
 	}
 	
-	if(ui_info.Referee_Interactive_info.Referee_Interactive_Flag.shoot_mode_flag == 1)
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag == 1)
 	{
+		if(ui_info.Referee_Interactive_info->chassis_mode == CHASSIS_ROTATE)
+		{
+			ui_info.ui_spin_sts = spinSPIN;
+			ui_info.box_spin_sts_coord[0] = TopRight_REC_on_SPIN_START_X;
+			ui_info.box_spin_sts_coord[1] = TopRight_REC_on_SPIN_START_Y;
+			ui_info.box_spin_sts_coord[2] = TopRight_REC_on_SPIN_END_X;
+			ui_info.box_spin_sts_coord[3] = TopRight_REC_on_SPIN_END_Y;
+			Rectangle_Draw(&gSPINSts_box, "996", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_spin_sts_coord[0], ui_info.box_spin_sts_coord[1], ui_info.box_spin_sts_coord[2], ui_info.box_spin_sts_coord[3]);
+			Char_Draw(&strSpin, "980", UI_Graph_Del, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("SPIN!"), 3, Robot_Warning_Spin_X, Robot_Warning_Spin_Y, "SPIN!");
+		}
+		else
+		{
+			ui_info.ui_spin_sts = spinFOLL;
+			ui_info.box_spin_sts_coord[0] = TopRight_REC_on_FOLL_START_X;
+			ui_info.box_spin_sts_coord[1] = TopRight_REC_on_FOLL_START_Y;
+			ui_info.box_spin_sts_coord[2] = TopRight_REC_on_FOLL_END_X;
+			ui_info.box_spin_sts_coord[3] = TopRight_REC_on_FOLL_END_Y;
+			Rectangle_Draw(&gSPINSts_box, "996", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_spin_sts_coord[0], ui_info.box_spin_sts_coord[1], ui_info.box_spin_sts_coord[2], ui_info.box_spin_sts_coord[3]);
+			Char_Draw(&strSpin, "980", UI_Graph_ADD, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("SPIN!"), 3, Robot_Warning_Spin_X, Robot_Warning_Spin_Y, "SPIN!");
+		}
+		UI_ReFresh(1, gSPINSts_box);
+		Char_ReFresh(strSpin);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag = 0;
 	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag == 1)
+	{
+		if(get_chassis_energy_mode() <= CHASSIS_NORMAL)
+		{
+			ui_info.ui_chassis_sts = NORM;
+			ui_info.box_chassis_sts_coord[0] = TopRight_REC_on_NORM_START_X;
+			ui_info.box_chassis_sts_coord[1] = TopRight_REC_on_NORM_START_Y;
+			ui_info.box_chassis_sts_coord[2] = TopRight_REC_on_NORM_END_X;
+			ui_info.box_chassis_sts_coord[3] = TopRight_REC_on_NORM_END_Y;
+			Rectangle_Draw(&gChassisSts_box, "997", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_chassis_sts_coord[0], ui_info.box_chassis_sts_coord[1], ui_info.box_chassis_sts_coord[2], ui_info.box_chassis_sts_coord[3]);
+		}
+		else
+		{
+			ui_info.ui_chassis_sts = BOOST;
+			ui_info.box_chassis_sts_coord[0] = TopRight_REC_on_BOOST_START_X;
+			ui_info.box_chassis_sts_coord[1] = TopRight_REC_on_BOOST_START_Y;
+			ui_info.box_chassis_sts_coord[2] = TopRight_REC_on_BOOST_END_X;
+			ui_info.box_chassis_sts_coord[3] = TopRight_REC_on_BOOST_END_Y;
+			Rectangle_Draw(&gChassisSts_box, "997", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_chassis_sts_coord[0], ui_info.box_chassis_sts_coord[1], ui_info.box_chassis_sts_coord[2], ui_info.box_chassis_sts_coord[3]);
+		}
+		UI_ReFresh(1, gChassisSts_box);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag = 0;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag == 1)
+	{
+		//GUN 状态机 状态
+		if(get_shoot_mode() == SHOOT_STOP)
+		{
+			ui_info.ui_gun_sts = gunOFF;
+			ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_OFF_START_X;
+			ui_info.box_gun_sts_coord[1] = TopLeft_REC_on_gun_OFF_START_Y;
+			ui_info.box_gun_sts_coord[2] = TopLeft_REC_on_gun_OFF_END_X;
+			ui_info.box_gun_sts_coord[3] = TopLeft_REC_on_gun_OFF_END_Y;
+		  Rectangle_Draw(&gGunSts_box, "994", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_gun_sts_coord[0], ui_info.box_gun_sts_coord[1], ui_info.box_gun_sts_coord[2], ui_info.box_gun_sts_coord[3]);
+			Char_Draw(&strFric, "979", UI_Graph_ADD, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("FRIC!"), 3, Robot_Warning_Fric_X, Robot_Warning_Fric_Y, "FRIC!");
+		}
+		else if(get_user_fire_ctrl() == user_SHOOT_AUTO) // 指交替发射
+		{
+			ui_info.ui_gun_sts = gunAUTO;
+			ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_AUTO_START_X;
+			ui_info.box_gun_sts_coord[1] = TopLeft_REC_on_gun_AUTO_START_Y;
+			ui_info.box_gun_sts_coord[2] = TopLeft_REC_on_gun_AUTO_END_X;
+			ui_info.box_gun_sts_coord[3] = TopLeft_REC_on_gun_AUTO_END_Y;
+		  Rectangle_Draw(&gGunSts_box, "994", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_gun_sts_coord[0], ui_info.box_gun_sts_coord[1], ui_info.box_gun_sts_coord[2], ui_info.box_gun_sts_coord[3]);
+			Char_Draw(&strFric, "979", UI_Graph_Del, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("FRIC!"), 3, Robot_Warning_Fric_X, Robot_Warning_Fric_Y, "FRIC!");
+		}
+		else if(get_user_fire_ctrl() == user_SHOOT_SEMI) //同时发射就是指semi user_SHOOT_SEMI
+		{
+			ui_info.ui_gun_sts = gunSEMI;
+			ui_info.box_gun_sts_coord[0] = TopLeft_REC_on_gun_SEMI_START_X;
+			ui_info.box_gun_sts_coord[1] = TopLeft_REC_on_gun_SEMI_START_Y;
+			ui_info.box_gun_sts_coord[2] = TopLeft_REC_on_gun_SEMI_END_X;
+			ui_info.box_gun_sts_coord[3] = TopLeft_REC_on_gun_SEMI_END_Y;
+		  Rectangle_Draw(&gGunSts_box, "994", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_gun_sts_coord[0], ui_info.box_gun_sts_coord[1], ui_info.box_gun_sts_coord[2], ui_info.box_gun_sts_coord[3]);
+			Char_Draw(&strFric, "979", UI_Graph_Del, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("FRIC!"), 3, Robot_Warning_Fric_X, Robot_Warning_Fric_Y, "FRIC!");
+		}
+		UI_ReFresh(1, gGunSts_box);
+		Char_ReFresh(strFric);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag = 0;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag == 1)
+	{
+		//CV 状态机 状态 //自动瞄准开关状态 0关 1自动瞄准
+		if(get_auto_aim_mode() == AUTO_AIM_OFF) 
+		{
+			ui_info.ui_cv_sts = cvOFF;
+			ui_info.box_cv_sts_coord[0] = TopLeft_REC_on_cv_OFF_START_X;
+			ui_info.box_cv_sts_coord[1] = TopLeft_REC_on_cv_OFF_START_Y;
+			ui_info.box_cv_sts_coord[2] = TopLeft_REC_on_cv_OFF_END_X;
+			ui_info.box_cv_sts_coord[3] = TopLeft_REC_on_cv_OFF_END_Y;
+			Rectangle_Draw(&gCVSts_box, "995", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_cv_sts_coord[0], ui_info.box_cv_sts_coord[1], ui_info.box_cv_sts_coord[2], ui_info.box_cv_sts_coord[3]);
+		}
+		else if(get_auto_aim_mode() == AUTO_AIM_AID)
+		{
+			ui_info.ui_cv_sts = cvAID;
+			ui_info.box_cv_sts_coord[0] = TopLeft_REC_on_cv_AID_START_X;
+			ui_info.box_cv_sts_coord[1] = TopLeft_REC_on_cv_AID_START_Y;
+			ui_info.box_cv_sts_coord[2] = TopLeft_REC_on_cv_AID_END_X;
+			ui_info.box_cv_sts_coord[3] = TopLeft_REC_on_cv_AID_END_Y;
+			Rectangle_Draw(&gCVSts_box, "995", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_cv_sts_coord[0], ui_info.box_cv_sts_coord[1], ui_info.box_cv_sts_coord[2], ui_info.box_cv_sts_coord[3]);
+		}
+		else if(get_auto_aim_mode() == AUTO_AIM_LOCK)
+		{
+			ui_info.ui_cv_sts = cvLOCK;
+			ui_info.box_cv_sts_coord[0] = TopLeft_REC_on_cv_LOCK_START_X;
+			ui_info.box_cv_sts_coord[1] = TopLeft_REC_on_cv_LOCK_START_Y;
+			ui_info.box_cv_sts_coord[2] = TopLeft_REC_on_cv_LOCK_END_X;
+			ui_info.box_cv_sts_coord[3] = TopLeft_REC_on_cv_LOCK_END_Y;
+			Rectangle_Draw(&gCVSts_box, "995", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_cv_sts_coord[0], ui_info.box_cv_sts_coord[1], ui_info.box_cv_sts_coord[2], ui_info.box_cv_sts_coord[3]);
+		}
+		UI_ReFresh(1, gCVSts_box);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag = 0;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag == 1)
+	{
+		//CV feedback 状态机
+		if(get_cv_gimbal_sts() == AUTO_AIM_OFF)
+		{
+			ui_info.ui_cv_feedback_sts = cvOFF;
+			ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_X;
+			ui_info.box_cv_feedback_sts[1] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_START_Y;
+			ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_X;
+			ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_OFF_END_Y;
+			Rectangle_Draw(&gCVfb_sts_box, "989", graph_operation, 4, UI_Color_White, 3, ui_info.box_cv_feedback_sts[0], ui_info.box_cv_feedback_sts[1], ui_info.box_cv_feedback_sts[2], ui_info.box_cv_feedback_sts[3]);
+		}
+		else
+		{
+			ui_info.ui_cv_feedback_sts = cvNORMAL; //对应的框也将会是一个大框
+			ui_info.box_cv_feedback_sts[0] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_X;
+			ui_info.box_cv_feedback_sts[1] = TopLeft_CV_FEEDBACK_STATUS_on_AID_START_Y;
+			ui_info.box_cv_feedback_sts[2] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_X;
+			ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_Y;
+			Rectangle_Draw(&gCVfb_sts_box, "989", graph_operation, 4, UI_Color_White, 3, ui_info.box_cv_feedback_sts[0], ui_info.box_cv_feedback_sts[1], ui_info.box_cv_feedback_sts[2], ui_info.box_cv_feedback_sts[3]);
+		}
+		UI_ReFresh(1, gCVSts_box);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 0;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag == 1)
+	{
+		if(ui_info.Referee_Interactive_info->chassis_error == 1)
+		{
+			Char_Draw(&strChassis, "030", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("CH"), 3, CHASSIS_ERROR_CODE_X, CHASSIS_ERROR_CODE_Y, "CH");
+		}
+		else
+		{
+			Char_Draw(&strChassis, "030", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("CH"), 3, CHASSIS_ERROR_CODE_X, CHASSIS_ERROR_CODE_Y, "CH");
+		}
+		Char_ReFresh(strChassis);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag = 1;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag == 1)
+	{
+		if(ui_info.Referee_Interactive_info->gimbal_error == 1)
+		{
+			Char_Draw(&strGimbal, "031", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("GY"), 3, GIMBAL_ERROR_CODE_X, GIMBAL_ERROR_CODE_Y, "GY");
+		}
+		else
+		{
+			Char_Draw(&strGimbal, "031", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("GY"), 3, GIMBAL_ERROR_CODE_X, GIMBAL_ERROR_CODE_Y, "GY");
+		}
+		Char_ReFresh(strGimbal);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag = 1;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_error_flag == 1)
+	{
+		if(ui_info.Referee_Interactive_info->shoot_error == 1)
+		{
+			Char_Draw(&strShoot, "032", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("FD"), 3, SHOOT_ERROR_CODE_X, SHOOT_ERROR_CODE_Y, "FD");
+		}
+		else
+		{
+			Char_Draw(&strShoot, "032", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("FD"), 3, SHOOT_ERROR_CODE_X, SHOOT_ERROR_CODE_Y, "FD");
+		}
+		Char_ReFresh(strShoot); 
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_error_flag = 1;
+	}
+	
+	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.current_superCap_error_flag == 1)
+	{
+		if(ui_info.Referee_Interactive_info->current_superCap_error == 1)
+		{
+			Char_Draw(&strSuperCap, "033", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("SC"), 3, SUPERCAP_ERROR_CODE_X, SUPERCAP_ERROR_CODE_Y, "SC");
+		}
+		else
+		{
+			Char_Draw(&strSuperCap, "033", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("SC"), 3, SUPERCAP_ERROR_CODE_X, SUPERCAP_ERROR_CODE_Y, "SC");
+		}
+		Char_ReFresh(strSuperCap);
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.current_superCap_error_flag = 1;
+	}
+	
+	/* ---------------------------- 不断刷新的 UI ---------------------------- */
+	// CV是否识别到目标
+	if(is_enemy_detected_with_pc_toe()) //(miniPC_info.enemy_detected == 1)
+	{
+		Circle_Draw(&gEnemyDetected_circle, "990", graph_operation, 4, UI_Color_Green, ui_cv_circle_size_debug, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
+	}
+	else
+	{
+		Circle_Draw(&gEnemyDetected_circle, "990", graph_operation, 4, UI_Color_Cyan, ui_cv_circle_size_debug, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
+	}
+	UI_ReFresh(1, gEnemyDetected_circle);
+	
+	// 超级电容
+	ui_info.cap_volt = ui_get_current_cap_voltage();
+	ui_info.cap_relative_pct = ui_get_current_cap_relative_pct();
+	ui_info.cap_pct = ui_info.cap_relative_pct;
+	ui_info.superCap_line_var_length = (uint16_t) Center_Bottom_SuperCap_Line_Length_Max * fp32_constrain( ui_get_current_cap_relative_pct(), 0.0f, 1.0f);
+	Float_Draw(&fCapVolt, "999", graph_operation, 4, UI_Color_Main, Center_Bottom_SuperCap_VOLT_Font_Size, 2, 3, Center_Bottom_SuperCap_VOLT_NUM_X_COORD, Center_Bottom_SuperCap_VOLT_NUM_Y_COORD, ui_info.cap_volt);
+	Float_Draw(&fCapPct, "998", graph_operation, 4, UI_Color_Main, Center_Bottom_SuperCap_PCT_Font_Size, 2, 3, Center_Bottom_SuperCap_PCT_NUM_X_COORD, Center_Bottom_SuperCap_PCT_NUM_Y_COORD, ui_info.cap_pct);
+	Line_Draw(&superCapLine, "988", graph_operation, 4, UI_Color_Main, Center_Bottom_SuperCap_Line_Width, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
+	UI_ReFresh(2, fCapVolt, fCapPct);
+	
+	// 底盘角度指示器
+	chassis_frame_UI_sensor_update(); //update gimbal yaw angle
+	chassis_frame_UI_arm_cal(ui_info.yaw_relative_angle);
+	//底盘角度指示框
+	Line_Draw(&chassisLine, "987", UI_Graph_ADD, 0, UI_Color_Main, Chassis_Frame_Height_Pen, ui_info.frame_chassis_coord_final[0], ui_info.frame_chassis_coord_final[1], ui_info.frame_chassis_coord_final[2], ui_info.frame_chassis_coord_final[3]);
+	Line_Draw(&chassisLightBar, "986", UI_Graph_ADD, 7, UI_Color_Yellow, Chassis_Frame_Light_Bar_Height_Pen, ui_info.bar_chassis_coord_final[0], ui_info.bar_chassis_coord_final[1], ui_info.bar_chassis_coord_final[2], ui_info.bar_chassis_coord_final[3]);
+	//炮塔 球 和 枪 线 捆绑动态图像
+	Circle_Draw(&turretCir, "026", UI_Graph_ADD, 8, UI_Color_White, Turret_Cir_Pen, Turret_Cir_Start_X, Turret_Cir_Start_Y, Turret_Cir_Radius);
+	Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
+	UI_ReFresh(5, chassisLine, chassisLightBar, turretCir, gunLine, superCapLine); //chassisLine, chassisLightBar, turretCir, gunLine需捆绑发送
 }
 
 /**************************************** 以下为驱动层 *****************************************/

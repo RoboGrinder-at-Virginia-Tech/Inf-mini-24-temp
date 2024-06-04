@@ -535,7 +535,7 @@ static void gimbal_behavour_set(gimbal_control_t *gimbal_mode_set)
 				{
 					gimbal_behaviour = GIMBAL_ABSOLUTE_ANGLE;
 				}
-			  else if(get_autoAimFlag() == 2 && is_enemy_detected_with_pc_toe()) //(get_autoAimFlag() == 2 && get_cv_gimbal_sts() == 2 && get_enemy_detected())
+			  else if(get_auto_aim_mode() == AUTO_AIM_LOCK && is_enemy_detected_with_pc_toe()) //(get_autoAimFlag() == 2 && get_cv_gimbal_sts() == 2 && get_enemy_detected())
 				{
 					gimbal_behaviour = GIMBAL_MINIPC_AUTOAIM_LOCK;
 				}
@@ -742,7 +742,7 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 		}
 		else
 		{
-			if(get_autoAimFlag() == 1) //(miniPC_info.autoAimFlag == 1) //&& (miniPC_info.cv_status == 0x01))
+			if(get_auto_aim_mode() == AUTO_AIM_AID) //(miniPC_info.autoAimFlag == 1) //&& (miniPC_info.cv_status == 0x01))
 			{ 
 				//old code:
 //				*yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN + miniPC_info.yawMove_aid;
@@ -755,7 +755,7 @@ static void gimbal_absolute_angle_control(fp32 *yaw, fp32 *pitch, gimbal_control
 				gimbal_control_set->gimbal_pitch_motor.miniPC_absolute_angle_set = gimbal_control_set->gimbal_pitch_motor.absolute_angle;
 				//´ýÌí¼Óreset pid
 			} 
-			else if(get_autoAimFlag() == 0) //(miniPC_info.autoAimFlag == 0)
+			else if(get_auto_aim_mode() == AUTO_AIM_OFF) //(miniPC_info.autoAimFlag == 0)
 			{
 	//    *yaw = yaw_channel * YAW_RC_SEN - gimbal_control_set->gimbal_rc_ctrl->mouse.x * YAW_MOUSE_SEN;
 	//    *pitch = pitch_channel * PITCH_RC_SEN + gimbal_control_set->gimbal_rc_ctrl->mouse.y * PITCH_MOUSE_SEN;
