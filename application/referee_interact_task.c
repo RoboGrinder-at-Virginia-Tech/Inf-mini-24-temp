@@ -85,6 +85,7 @@ void referee_interact_task(void const *pvParameters)
 	vTaskDelay(200);
 	
 	Referee_Interactive_info.rc_ctrl_ptr = get_remote_control_point();
+	UI_init(&Referee_Interactive_info);
 
 	while (1)
   {
@@ -100,6 +101,7 @@ void referee_interact_task(void const *pvParameters)
 			// °´ÏÂ
 			case 1:
 				static_UI_func();
+				dynamic_UI_func(UI_Graph_ADD);
 			break;
 
 			default:
@@ -107,7 +109,10 @@ void referee_interact_task(void const *pvParameters)
 			break;
 		}
 		
-		vTaskDelay(100); //100
+		some_mode_change_check();
+		dynamic_UI_func(UI_Graph_Change);
+		
+		vTaskDelay(10); //100
 
 #if INCLUDE_uxTaskGetStackHighWaterMark
         referee_interact_task_high_water = uxTaskGetStackHighWaterMark(NULL);

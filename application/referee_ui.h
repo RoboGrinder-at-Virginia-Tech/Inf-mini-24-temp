@@ -333,6 +333,7 @@ int Char_ReFresh(String_Data string_Data);
 void Arc_Draw(Graph_Data *image,char imagename[3],u32 Graph_Operate,u32 Graph_Layer,u32 Graph_Color,u32 Graph_StartAngle,u32 Graph_EndAngle,u32 Graph_Width,u32 Start_x,u32 Start_y,u32 x_Length,u32 y_Length);
 
 // 用户UI绘制函数
+void UI_init(Referee_Interactive_info_t* Referee_Interactive_info);
 void static_UI_func(void);
 void some_mode_change_check(void);
 void dynamic_UI_func(uint32_t graph_operation);

@@ -25,6 +25,9 @@ RM自定义UI协议
 #include "user_lib.h"
 #include <string.h>
 
+#define UI_ADD_FRAME_BREAK_TIME 30
+#define UI_CHANGE_FRAME_BREAK_TIME 30
+
 // 动态UI的刷新频率
 const uint16_t dynamic_ui_send_period = 250; //500; //5000
 const uint16_t static_ui_send_period = 250; //500; //5000
@@ -253,23 +256,25 @@ void static_UI_func()
 	
 	// 开始打包发送
 	Char_ReFresh(strChassisSts);
-	vTaskDelay(1);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 	Char_ReFresh(strSPINSts);
-	
-//	// 步兵只用准心
-//	UI_ReFresh(2, gAimVertL, gAimHorizL8m);
-////	UI_ReFresh(5, gAimVertL, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m); 
-////	UI_ReFresh(5, gAimHorizL8m, left8to7, left7to5, left5to4, left4to2);
-////	UI_ReFresh(2, right8to7, right7to5);
-////	UI_ReFresh(2, right5to4, right4to2);
-
-//	Char_ReFresh(strCVSts);
-//	Char_ReFresh(strGunSts);
-//	//Char_ReFresh(strProjSLimSts);
-//	
-//	UI_ReFresh(1, superCapFrame);
-
-//	UI_ReFresh(2, chassisPosAimLeftLine, chassisPosAimRightLine);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
+	// 步兵只用准心
+	UI_ReFresh(2, gAimVertL, gAimHorizL8m);
+//	UI_ReFresh(5, gAimVertL, gAimHorizL2m, gAimHorizL4m, gAimHorizL5m, gAimHorizL7m); 
+//	UI_ReFresh(5, gAimHorizL8m, left8to7, left7to5, left5to4, left4to2);
+//	UI_ReFresh(2, right8to7, right7to5);
+//	UI_ReFresh(2, right5to4, right4to2);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
+	Char_ReFresh(strCVSts);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
+	Char_ReFresh(strGunSts);
+	//Char_ReFresh(strProjSLimSts);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
+	UI_ReFresh(1, superCapFrame);
+  vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
+	UI_ReFresh(2, chassisPosAimLeftLine, chassisPosAimRightLine);
+	vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 }
 
 // 某些特定模块发生变化 检测, 无法外部出发这些变化, 比如模块离线
@@ -378,8 +383,12 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Char_Draw(&strSpin, "980", UI_Graph_ADD, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("SPIN!"), 3, Robot_Warning_Spin_X, Robot_Warning_Spin_Y, "SPIN!");
 		}
 		UI_ReFresh(1, gSPINSts_box);
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 		Char_ReFresh(strSpin);
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag = 0;
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag == 1)
@@ -404,6 +413,8 @@ void dynamic_UI_func(uint32_t graph_operation)
 		}
 		UI_ReFresh(1, gChassisSts_box);
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag = 0;
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag == 1)
@@ -440,8 +451,12 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Char_Draw(&strFric, "979", UI_Graph_Del, 5, UI_Color_Purplish_red, Robot_Warning_Msg_Font_Size, strlen("FRIC!"), 3, Robot_Warning_Fric_X, Robot_Warning_Fric_Y, "FRIC!");
 		}
 		UI_ReFresh(1, gGunSts_box);
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 		Char_ReFresh(strFric);
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag = 0;
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag == 1)
@@ -476,6 +491,8 @@ void dynamic_UI_func(uint32_t graph_operation)
 		}
 		UI_ReFresh(1, gCVSts_box);
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag = 0;
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag == 1)
@@ -499,8 +516,10 @@ void dynamic_UI_func(uint32_t graph_operation)
 			ui_info.box_cv_feedback_sts[3] = TopLeft_CV_FEEDBACK_STATUS_on_LOCK_END_Y;
 			Rectangle_Draw(&gCVfb_sts_box, "989", graph_operation, 4, UI_Color_White, 3, ui_info.box_cv_feedback_sts[0], ui_info.box_cv_feedback_sts[1], ui_info.box_cv_feedback_sts[2], ui_info.box_cv_feedback_sts[3]);
 		}
-		UI_ReFresh(1, gCVSts_box);
+		UI_ReFresh(1, gCVfb_sts_box);
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 0;
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag == 1)
@@ -515,6 +534,8 @@ void dynamic_UI_func(uint32_t graph_operation)
 		}
 		Char_ReFresh(strChassis);
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag = 1;
+		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag == 1)
@@ -570,6 +591,8 @@ void dynamic_UI_func(uint32_t graph_operation)
 		Circle_Draw(&gEnemyDetected_circle, "990", graph_operation, 4, UI_Color_Cyan, ui_cv_circle_size_debug, TopLeft_Cir_on_cv_DET_START_X, TopLeft_Cir_on_cv_DET_START_Y, TopLeft_Cir_on_cv_DET_radius);
 	}
 	UI_ReFresh(1, gEnemyDetected_circle);
+	if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+	else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	
 	// 超级电容
 	ui_info.cap_volt = ui_get_current_cap_voltage();
@@ -580,17 +603,21 @@ void dynamic_UI_func(uint32_t graph_operation)
 	Float_Draw(&fCapPct, "998", graph_operation, 4, UI_Color_Main, Center_Bottom_SuperCap_PCT_Font_Size, 2, 3, Center_Bottom_SuperCap_PCT_NUM_X_COORD, Center_Bottom_SuperCap_PCT_NUM_Y_COORD, ui_info.cap_pct);
 	Line_Draw(&superCapLine, "988", graph_operation, 4, UI_Color_Main, Center_Bottom_SuperCap_Line_Width, Center_Bottom_SuperCap_Line_Start_X, Center_Bottom_SuperCap_Line_Start_Y, Center_Bottom_SuperCap_Line_Start_X + ui_info.superCap_line_var_length, Center_Bottom_SuperCap_Line_End_Y);
 	UI_ReFresh(2, fCapVolt, fCapPct);
+	if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+	else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	
 	// 底盘角度指示器
 	chassis_frame_UI_sensor_update(); //update gimbal yaw angle
 	chassis_frame_UI_arm_cal(ui_info.yaw_relative_angle);
 	//底盘角度指示框
-	Line_Draw(&chassisLine, "987", UI_Graph_ADD, 0, UI_Color_Main, Chassis_Frame_Height_Pen, ui_info.frame_chassis_coord_final[0], ui_info.frame_chassis_coord_final[1], ui_info.frame_chassis_coord_final[2], ui_info.frame_chassis_coord_final[3]);
-	Line_Draw(&chassisLightBar, "986", UI_Graph_ADD, 7, UI_Color_Yellow, Chassis_Frame_Light_Bar_Height_Pen, ui_info.bar_chassis_coord_final[0], ui_info.bar_chassis_coord_final[1], ui_info.bar_chassis_coord_final[2], ui_info.bar_chassis_coord_final[3]);
+	Line_Draw(&chassisLine, "987", graph_operation, 0, UI_Color_Main, Chassis_Frame_Height_Pen, ui_info.frame_chassis_coord_final[0], ui_info.frame_chassis_coord_final[1], ui_info.frame_chassis_coord_final[2], ui_info.frame_chassis_coord_final[3]);
+	Line_Draw(&chassisLightBar, "986", graph_operation, 7, UI_Color_Yellow, Chassis_Frame_Light_Bar_Height_Pen, ui_info.bar_chassis_coord_final[0], ui_info.bar_chassis_coord_final[1], ui_info.bar_chassis_coord_final[2], ui_info.bar_chassis_coord_final[3]);
 	//炮塔 球 和 枪 线 捆绑动态图像
-	Circle_Draw(&turretCir, "026", UI_Graph_ADD, 8, UI_Color_White, Turret_Cir_Pen, Turret_Cir_Start_X, Turret_Cir_Start_Y, Turret_Cir_Radius);
-	Line_Draw(&gunLine, "027", UI_Graph_ADD, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
+	Circle_Draw(&turretCir, "026", graph_operation, 8, UI_Color_White, Turret_Cir_Pen, Turret_Cir_Start_X, Turret_Cir_Start_Y, Turret_Cir_Radius);
+	Line_Draw(&gunLine, "027", graph_operation, 8, UI_Color_Black, Gun_Line_Pen, Gun_Line_Start_X, Gun_Line_Start_Y, Gun_Line_End_X, Gun_Line_End_Y);
 	UI_ReFresh(5, chassisLine, chassisLightBar, turretCir, gunLine, superCapLine); //chassisLine, chassisLightBar, turretCir, gunLine需捆绑发送
+	if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
+	else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 }
 
 /**************************************** 以下为驱动层 *****************************************/
