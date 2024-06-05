@@ -31,7 +31,7 @@ uint32_t referee_interact_task_high_water;
 // 暂时在这里存 interactive info
 Referee_Interactive_info_t Referee_Interactive_info;
 
-// 更新每个UI的刷新请求flag
+// 更新每个UI的刷新请求flag - 1 是请求刷新
 void set_interactive_flag_chassis_mode_flag(uint8_t set_val)
 {
 	Referee_Interactive_info.Referee_Interactive_Flag.chassis_mode_flag = set_val;

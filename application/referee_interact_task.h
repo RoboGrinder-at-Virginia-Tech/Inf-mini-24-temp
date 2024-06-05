@@ -63,5 +63,10 @@ typedef struct
 #pragma pack()
 
 extern void referee_interact_task(void const *pvParameters);
+extern void set_interactive_flag_chassis_mode_flag(uint8_t set_val);
+extern void set_interactive_flag_chassis_energy_mode_flag(uint8_t set_val);
+extern void set_interactive_flag_shoot_mode_flag(uint8_t set_val);
+extern void set_interactive_flag_auto_aim_mode_flag(uint8_t set_val);
+extern void set_interactive_flag_cv_gimbal_sts_flag(uint8_t set_val);
 
 #endif

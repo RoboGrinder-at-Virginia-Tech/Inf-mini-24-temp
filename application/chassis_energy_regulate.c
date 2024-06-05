@@ -25,6 +25,7 @@
 #include "detect_task.h"
 #include "SuperCap_comm.h"
 #include "chassis_task.h"
+#include "referee_interact_task.h"
 
 #define RAD_PER_SEC_FROM_RPM(rpm) ( (float)(((float)rpm) * 2.0f * PI / 60.0f) ) // 将RPM转换为弧度每秒
 
@@ -75,6 +76,12 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 		default:
 			// does nothings
 		break;
+	}
+	
+	// 刷新UI
+	if(chassis_energy->last_chassis_energy_mode != chassis_energy->chassis_energy_mode)
+	{
+		set_interactive_flag_chassis_energy_mode_flag(1);
 	}
 	
 	chassis_energy->last_chassis_energy_mode = chassis_energy->chassis_energy_mode;

@@ -31,6 +31,7 @@
 #include "lowpass_filter.h"
 #include "linear_throttle.h"
 #include "SuperCap_comm.h"
+#include "referee_interact_task.h"
 
 #define rc_deadband_limit(input, output, dealine)        \
     {                                                    \
@@ -336,7 +337,13 @@ static void chassis_mode_change_control_transit(chassis_move_t *chassis_move_tra
     if (chassis_move_transit->last_chassis_mode == chassis_move_transit->chassis_mode)
     {
         return;
-    }
+    } else {
+			// 刷新UI
+			if (chassis_move_transit->last_chassis_mode >= CHASSIS_FOLLOW_GIMBAL_YAW || chassis_move_transit->chassis_mode >= CHASSIS_FOLLOW_GIMBAL_YAW)
+			{
+				set_interactive_flag_chassis_mode_flag(1);
+			}
+		}
 
     //change to follow gimbal angle mode
     //切入跟随云台模式
