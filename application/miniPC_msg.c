@@ -32,6 +32,7 @@
 #include "referee.h"
 #include "arm_math.h"
 #include "AHRS_MiddleWare.h"
+#include "referee_interact_task.h"
 
 extern pc_comm_unpack_data_t pc_comm_unpack_data_obj;
 
@@ -119,6 +120,13 @@ void init_embed_to_pc_comm_struct_data(void)
 void set_auto_aim_mode(auto_aim_mode_e auto_aim_mode)
 {
 	pc_info.auto_aim_mode = auto_aim_mode;
+	
+	// 在模式更改时, 请求绘制UI
+	if(pc_info.auto_aim_mode != pc_info.last_auto_aim_mode)
+	{
+		set_interactive_flag_auto_aim_mode_flag(1);
+	}
+	pc_info.last_auto_aim_mode = pc_info.auto_aim_mode;
 }
 /* ---------- setter method end ---------- */
 

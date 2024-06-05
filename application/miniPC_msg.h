@@ -350,6 +350,7 @@ typedef struct
   /* -------------------- CV ON/OFF controled by operator -------------------- */
 	//Auto aim ON/OFF switch status: 0-off; 1-auto aim AID; 2-auto aim LOCK
 	auto_aim_mode_e auto_aim_mode;
+	auto_aim_mode_e last_auto_aim_mode;
 	/* -------------------- CV ON/OFF controled by operator - END -------------------- */
 }pc_info_t;
 /*---------------------------------------------------- Processed Data - End Above ----------------------------------------------------*/

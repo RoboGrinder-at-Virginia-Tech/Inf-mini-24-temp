@@ -10,6 +10,7 @@ RM自定义UI协议
 **************************************************************/
 
 #include "referee_ui.h"
+#include "referee_interact_task.h"
 #include "main.h"
 #include "cmsis_os.h"
 #include <stdio.h>
@@ -280,7 +281,16 @@ void static_UI_func()
 // 某些特定模块发生变化 检测, 无法外部出发这些变化, 比如模块离线
 void some_mode_change_check()
 {
-	// 判断情况
+	// 判断状态情况
+	
+	// CV反馈也是除了开就是关
+	ui_info.Referee_Interactive_info->cv_gimbal_sts = get_cv_gimbal_sts();
+	if(ui_info.Referee_Interactive_info->cv_gimbal_sts != ui_info.Referee_Interactive_info->last_cv_gimbal_sts && (ui_info.Referee_Interactive_info->cv_gimbal_sts == AUTO_AIM_OFF || ui_info.Referee_Interactive_info->last_cv_gimbal_sts == AUTO_AIM_OFF) )
+	{
+		set_interactive_flag_cv_gimbal_sts_flag(1);
+	}
+	ui_info.Referee_Interactive_info->last_cv_gimbal_sts = ui_info.Referee_Interactive_info->cv_gimbal_sts;
+	
 	if(toe_is_error(CHASSIS_MOTOR1_TOE) || toe_is_error(CHASSIS_MOTOR2_TOE) || toe_is_error(CHASSIS_MOTOR3_TOE) || toe_is_error(CHASSIS_MOTOR4_TOE))
 	{
 		ui_info.Referee_Interactive_info->chassis_error = 1;
@@ -360,9 +370,11 @@ void dynamic_UI_func(uint32_t graph_operation)
 		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 1;
 	}
 	
+	// 状态切换UI
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag == 1)
 	{
-		if(ui_info.Referee_Interactive_info->chassis_mode == CHASSIS_ROTATE)
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag = 0; // 先解除flag以免delay
+		if(get_chassis_mode() == CHASSIS_ROTATE)
 		{
 			ui_info.ui_spin_sts = spinSPIN;
 			ui_info.box_spin_sts_coord[0] = TopRight_REC_on_SPIN_START_X;
@@ -385,14 +397,15 @@ void dynamic_UI_func(uint32_t graph_operation)
 		UI_ReFresh(1, gSPINSts_box);
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
+		
 		Char_ReFresh(strSpin);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_mode_flag = 0;
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag = 0;
 		if(get_chassis_energy_mode() <= CHASSIS_NORMAL)
 		{
 			ui_info.ui_chassis_sts = NORM;
@@ -412,13 +425,13 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Rectangle_Draw(&gChassisSts_box, "997", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_chassis_sts_coord[0], ui_info.box_chassis_sts_coord[1], ui_info.box_chassis_sts_coord[2], ui_info.box_chassis_sts_coord[3]);
 		}
 		UI_ReFresh(1, gChassisSts_box);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_energy_mode_flag = 0;
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag = 0;
 		//GUN 状态机 状态
 		if(get_shoot_mode() == SHOOT_STOP)
 		{
@@ -453,14 +466,15 @@ void dynamic_UI_func(uint32_t graph_operation)
 		UI_ReFresh(1, gGunSts_box);
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
+		
 		Char_ReFresh(strFric);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_mode_flag = 0;
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag = 0;
 		//CV 状态机 状态 //自动瞄准开关状态 0关 1自动瞄准
 		if(get_auto_aim_mode() == AUTO_AIM_OFF) 
 		{
@@ -490,13 +504,13 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Rectangle_Draw(&gCVSts_box, "995", graph_operation, 4, UI_Color_Cyan, 3, ui_info.box_cv_sts_coord[0], ui_info.box_cv_sts_coord[1], ui_info.box_cv_sts_coord[2], ui_info.box_cv_sts_coord[3]);
 		}
 		UI_ReFresh(1, gCVSts_box);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.auto_aim_mode_flag = 0;
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 0;
 		//CV feedback 状态机
 		if(get_cv_gimbal_sts() == AUTO_AIM_OFF)
 		{
@@ -517,13 +531,14 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Rectangle_Draw(&gCVfb_sts_box, "989", graph_operation, 4, UI_Color_White, 3, ui_info.box_cv_feedback_sts[0], ui_info.box_cv_feedback_sts[1], ui_info.box_cv_feedback_sts[2], ui_info.box_cv_feedback_sts[3]);
 		}
 		UI_ReFresh(1, gCVfb_sts_box);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.cv_gimbal_sts_flag = 0;
 		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
 		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
 	}
 	
+	// 关键模块离线 error code
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag = 1;
 		if(ui_info.Referee_Interactive_info->chassis_error == 1)
 		{
 			Char_Draw(&strChassis, "030", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("CH"), 3, CHASSIS_ERROR_CODE_X, CHASSIS_ERROR_CODE_Y, "CH");
@@ -533,13 +548,12 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Char_Draw(&strChassis, "030", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("CH"), 3, CHASSIS_ERROR_CODE_X, CHASSIS_ERROR_CODE_Y, "CH");
 		}
 		Char_ReFresh(strChassis);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.chassis_error_flag = 1;
-		if(graph_operation == UI_Graph_ADD) {vTaskDelay(UI_ADD_FRAME_BREAK_TIME);}
-		else {vTaskDelay(UI_CHANGE_FRAME_BREAK_TIME);}
+		vTaskDelay(UI_ADD_FRAME_BREAK_TIME); // error code只有删除或显示
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag = 1;
 		if(ui_info.Referee_Interactive_info->gimbal_error == 1)
 		{
 			Char_Draw(&strGimbal, "031", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("GY"), 3, GIMBAL_ERROR_CODE_X, GIMBAL_ERROR_CODE_Y, "GY");
@@ -549,11 +563,12 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Char_Draw(&strGimbal, "031", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("GY"), 3, GIMBAL_ERROR_CODE_X, GIMBAL_ERROR_CODE_Y, "GY");
 		}
 		Char_ReFresh(strGimbal);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.gimbal_error_flag = 1;
+		vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_error_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_error_flag = 1;
 		if(ui_info.Referee_Interactive_info->shoot_error == 1)
 		{
 			Char_Draw(&strShoot, "032", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("FD"), 3, SHOOT_ERROR_CODE_X, SHOOT_ERROR_CODE_Y, "FD");
@@ -563,11 +578,12 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Char_Draw(&strShoot, "032", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("FD"), 3, SHOOT_ERROR_CODE_X, SHOOT_ERROR_CODE_Y, "FD");
 		}
 		Char_ReFresh(strShoot); 
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.shoot_error_flag = 1;
+		vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 	}
 	
 	if(ui_info.Referee_Interactive_info->Referee_Interactive_Flag.current_superCap_error_flag == 1)
 	{
+		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.current_superCap_error_flag = 1;
 		if(ui_info.Referee_Interactive_info->current_superCap_error == 1)
 		{
 			Char_Draw(&strSuperCap, "033", UI_Graph_ADD, 2, UI_Color_Yellow, 20, strlen("SC"), 3, SUPERCAP_ERROR_CODE_X, SUPERCAP_ERROR_CODE_Y, "SC");
@@ -577,7 +593,7 @@ void dynamic_UI_func(uint32_t graph_operation)
 			Char_Draw(&strSuperCap, "033", UI_Graph_Del, 2, UI_Color_Yellow, 20, strlen("SC"), 3, SUPERCAP_ERROR_CODE_X, SUPERCAP_ERROR_CODE_Y, "SC");
 		}
 		Char_ReFresh(strSuperCap);
-		ui_info.Referee_Interactive_info->Referee_Interactive_Flag.current_superCap_error_flag = 1;
+		vTaskDelay(UI_ADD_FRAME_BREAK_TIME);
 	}
 	
 	/* ---------------------------- 不断刷新的 UI ---------------------------- */

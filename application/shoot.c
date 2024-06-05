@@ -35,7 +35,7 @@
 #include "miniPC_msg.h"
 #include "prog_msg_utility.h"
 #include "odometer_task.h"
-
+#include "referee_interact_task.h"
 #include "stdlib.h"
 
 #define shoot_fric1_on(pwm) fric1_on((pwm)) //摩擦轮1pwm宏定义
@@ -500,6 +500,15 @@ static void shoot_set_mode(void)
 			shoot_control.user_fire_ctrl = user_SHOOT_OFF;
 		}
 		//---------Q按键计数以及相关检测结束---------
+		
+		//--------- 基于 user_fire_ctrl 的对UI的绘制 开始 ---------
+		if (shoot_control.last_user_fire_ctrl != shoot_control.user_fire_ctrl)
+		{
+			set_interactive_flag_shoot_mode_flag(1);
+		}
+		shoot_control.last_user_fire_ctrl = shoot_control.user_fire_ctrl;
+		//--------- 基于 user_fire_ctrl 的对UI的绘制 结束 ---------
+		
 		/*这里是对老DJI开源代码的兼容 - 通过按键 低通滤波值 之前的shoot_mode, 前面有(按键<-map->user_fire_ctrl);
 			先对当前 shoot_mode 赋值一次(按键其它<-map->shoot_mode), 后面根据user_fire_ctrl会给shoot_mode赋值第二次(user_fire_mode<-map->shoot_mode) - 是因为shoot_mode切换很快, 控制会直接用这个状态机
 			实现多个user_fire_ctrl映射到有限个shoot_mode - 按键扫描还可以优化*/
@@ -588,7 +597,7 @@ static void shoot_set_mode(void)
 			set_auto_aim_mode(AUTO_AIM_AID); //miniPC_info.autoAimFlag = 1;
 		}
 		
-		if(shoot_control.press_r_time == PRESS_LONG_TIME_R || shoot_control.press_key_V_time == PRESS_LONG_TIME_V)
+		if(shoot_control.press_r_time == PRESS_LONG_TIME_R)
 		{
 			set_auto_aim_mode(AUTO_AIM_LOCK); //miniPC_info.autoAimFlag = 2;
 			//shoot_control.key_X_cnt = 2;
@@ -599,7 +608,7 @@ static void shoot_set_mode(void)
 //			shoot_control.key_X_cnt = 1;
 //		}
 		
-		if(shoot_control.shoot_rc[TEMP].key[KEY_PRESS].c) // press C to turn off auto aim
+		if(shoot_control.shoot_rc[TEMP].key[KEY_PRESS].z) // press Z to turn off auto aim
 		{
 			set_auto_aim_mode(AUTO_AIM_OFF); //miniPC_info.autoAimFlag = 0;
 			shoot_control.key_X_cnt = 0;

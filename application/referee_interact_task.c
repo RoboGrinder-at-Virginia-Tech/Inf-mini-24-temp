@@ -53,29 +53,6 @@ void set_interactive_flag_cv_gimbal_sts_flag(uint8_t set_val)
 	Referee_Interactive_info.Referee_Interactive_Flag.cv_gimbal_sts_flag = set_val;
 }
 
-// 更新UI所见的状态机
-void set_interactive_info_chassis_mode(chassis_mode_e chassis_mode)
-{
-	Referee_Interactive_info.chassis_mode = chassis_mode;
-}
-void set_interactive_info_chassis_energy_mode(chassis_energy_mode_e chassis_energy_mode)
-{
-	Referee_Interactive_info.chassis_energy_mode = chassis_energy_mode;
-}
-void set_interactive_info_user_fire_ctrl_mode(user_fire_ctrl_e user_fire_ctrl_mode)
-{
-	Referee_Interactive_info.user_fire_ctrl_mode = user_fire_ctrl_mode;
-}
-void set_interactive_info_auto_aim_mode(auto_aim_mode_e auto_aim_mode)
-{
-	Referee_Interactive_info.auto_aim_mode = auto_aim_mode;
-}
-void set_interactive_info_cv_gimbal_sts(auto_aim_mode_e cv_gimbal_sts)
-{
-	Referee_Interactive_info.cv_gimbal_sts = cv_gimbal_sts;
-}
-
-
 //uint32_t temp_time_check_RTOS = 0;
 //uint32_t temp_time_check_HAL = 0;
 

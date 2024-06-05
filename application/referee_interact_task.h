@@ -39,12 +39,10 @@ typedef struct
 	const RC_ctrl_t *rc_ctrl_ptr;
 	
 	Referee_Interactive_Flag_t Referee_Interactive_Flag;
+	
 	// 为UI绘制以及交互数据所用
-	chassis_mode_e chassis_mode;			 // 底盘模式
-	chassis_energy_mode_e chassis_energy_mode; // 底盘能量模式
-	user_fire_ctrl_e user_fire_ctrl_mode;				 // 发射模式设置
-	auto_aim_mode_e auto_aim_mode; // 操作手控制的 自瞄flag
 	auto_aim_mode_e cv_gimbal_sts; // cv工作模式
+	auto_aim_mode_e last_cv_gimbal_sts; // cv工作模式
 	
 	bool_t chassis_error;
 	bool_t last_chassis_error;
