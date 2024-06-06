@@ -423,8 +423,8 @@ bool_t gen3Cap_is_data_error_proc()
 {
 	gen3Cap_info.status = superCap_online;
 	
-	// 就判断个是否有error flag
-	if(gen3Cap_info.status != CAP_NORMAL)
+	// 就判断个是否有error flag - 不是NORMAL即error
+	if(gen3Cap_info.Pflag != CAP_NORMAL)
 	{
 		return 1;
 	}
@@ -675,7 +675,8 @@ fp32 ui_get_current_cap_voltage()
 	 }
 	 else if(current_superCap == gen3Cap_ID)
 	 {
-		 if(toe_is_error(GEN3CAP_TOE))
+		 // toe_is_error(GEN3CAP_TOE) 出现error code时仍显示电压, OLED 也显示电压, 无打勾
+		 if(gen3Cap_info.status == superCap_offline)
 		 {
 			 //ui_info.cap_pct = 0.0f;
 			 //ui_info.cap_volt = 0.0f;
@@ -746,6 +747,7 @@ fp32 ui_get_current_cap_relative_pct()
 		 }
 		 else if(current_superCap == gen3Cap_ID)
 		 {
+			 // 出现error code时 百分比显0
 			 if(toe_is_error(GEN3CAP_TOE))
 			 {
 				 //ui_info.cap_pct = 0.0f;

@@ -22,9 +22,9 @@
 
 typedef enum
 {
-  CHASSIS_BOOST,
-	CHASSIS_NORMAL,
 	CHASSIS_CHARGE,
+	CHASSIS_NORMAL,
+  CHASSIS_BOOST,
 } chassis_energy_mode_e;
 
 struct chassis_move_t;

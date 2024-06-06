@@ -224,4 +224,5 @@ extern void chassis_power_control_non_speed(chassis_move_t *chassis_power_contro
 extern void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
 extern void gen2_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
 extern void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control);
+extern void general_speed_adaptive_chassis_power_control(chassis_move_t *sacpc);
 #endif
