@@ -213,7 +213,7 @@ extern void wulieCap_offline_proc(void);
 extern bool_t wulieCap_is_data_error_proc(void);
 
 extern bool_t current_superCap_is_offline(void);
-extern bool_t all_superCap_is_offline(void);
+extern bool_t all_superCap_is_error(void);
 
 extern void gen2Cap_offline_proc(void);
 extern bool_t gen2Cap_is_data_error_proc(void);

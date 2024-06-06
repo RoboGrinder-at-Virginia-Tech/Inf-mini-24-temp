@@ -17,7 +17,6 @@
   ****************************(C) COPYRIGHT 2019 DJI****************************
   */
 #include "chassis_task.h"
-#include "chassis_behaviour.h"
 #include "gimbal_behaviour.h"
 #include "cmsis_os.h"
 #include "arm_math.h"

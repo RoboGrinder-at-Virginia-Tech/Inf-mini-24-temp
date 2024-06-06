@@ -17,7 +17,6 @@
 #include "referee_usart_task.h"
 #include "detect_task.h"
 #include "chassis_task.h"
-#include "chassis_behaviour.h"
 #include "miniPC_msg.h"
 #include "user_lib.h"
 #include "remote_control.h"

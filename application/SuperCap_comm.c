@@ -270,7 +270,7 @@ bool_t current_superCap_is_offline()
 	}
 }
 
-bool_t all_superCap_is_offline()
+bool_t all_superCap_is_error()
 {
 	return toe_is_error(ZIDACAP_TOE) && toe_is_error(WULIECAP_TOE) && toe_is_error(GEN2CAP_TOE) && toe_is_error(GEN3CAP_TOE);
 }
@@ -558,7 +558,7 @@ cap_Pflag_e get_gen3Cap_P_Flag()
 fp32 cer_get_current_cap_boost_mode_pct_threshold()
 {
 	// 特殊情况1: 无超级电容在线 - 用的缓冲能量
-	if(all_superCap_is_offline())
+	if(all_superCap_is_error())
 	{
 		return 0.5;
 	}
@@ -586,7 +586,7 @@ fp32 cer_get_current_cap_boost_mode_pct_threshold()
 fp32 cer_get_current_cap_relative_pct()
 {
 	// 特殊情况1: 无超级电容在线 - 用的缓冲能量
-	if(all_superCap_is_offline())
+	if(all_superCap_is_error())
 	{
 		fp32 pct = get_chassis_buffer_energy() / 60.0f; // 缓冲能量 max 最小60J
 		return pct;
