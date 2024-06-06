@@ -132,6 +132,14 @@ typedef struct
 	
 }gen2Cap_info_t;
 
+typedef enum 
+{
+	CAP_NORMAL = 0,    //正常
+	CAP_VOLTAGE_SHUTDOWN = 1, //输入电压异常
+	CAP_TEMP_SHUTDOWN = 2,       //过热
+	CAP_CURRENT_SHUTDOWN = 3, //过流
+}cap_Pflag_e;
+
 typedef struct
 {
 	//发给cap的数据
@@ -149,7 +157,7 @@ typedef struct
 	fp32 Vbank_f;
 	fp32 Pchassis_f;
 	fp32 Pmax_f;
-	uint8_t Pflag;
+	cap_Pflag_e Pflag;
 	
 	//其它FSM 和 变量
 	superCap_connection_status_e status;
@@ -216,6 +224,7 @@ extern bool_t gen3Cap_is_data_error_proc(void);
 extern void cpc_get_superCap_vol_and_energy(fp32* cap_voltage, fp32* EBank);
 extern uint16_t cpc_get_superCap_charge_pwr(void);
 extern fp32 cpc_get_gen3Cap_Pmax(void);
+extern cap_Pflag_e get_gen3Cap_P_Flag(void);
 
 extern fp32 cer_get_current_cap_boost_mode_pct_threshold(void);
 extern fp32 cer_get_current_cap_relative_pct(void);

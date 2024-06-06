@@ -421,9 +421,17 @@ void gen3Cap_offline_proc()
 
 bool_t gen3Cap_is_data_error_proc()
 {
-		gen3Cap_info.status = superCap_online;
-		//永远 return 0;
+	gen3Cap_info.status = superCap_online;
+	
+	// 就判断个是否有error flag
+	if(gen3Cap_info.status != CAP_NORMAL)
+	{
+		return 1;
+	}
+	else
+	{
 		return 0;
+	}
 }
 
 
@@ -541,9 +549,20 @@ fp32 cpc_get_gen3Cap_Pmax()
 	return gen3Cap_info.Pmax_f;
 }
 
+cap_Pflag_e get_gen3Cap_P_Flag()
+{
+	return gen3Cap_info.Pflag;
+}
+
 // 给 chassis energy regulate 的函数
 fp32 cer_get_current_cap_boost_mode_pct_threshold()
 {
+	// 特殊情况1: 无超级电容在线 - 用的缓冲能量
+	if(all_superCap_is_offline())
+	{
+		return 0.5;
+	}
+	
 	if(current_superCap == ZiDaCap_ID)
 	{
 		return 0.5f;
@@ -566,6 +585,13 @@ fp32 cer_get_current_cap_boost_mode_pct_threshold()
 // 给 chassis energy regulate 的函数 relative指相对于最小可用能量
 fp32 cer_get_current_cap_relative_pct()
 {
+	// 特殊情况1: 无超级电容在线 - 用的缓冲能量
+	if(all_superCap_is_offline())
+	{
+		fp32 pct = get_chassis_buffer_energy() / 60.0f; // 缓冲能量 max 最小60J
+		return pct;
+	}
+	
 	if(current_superCap == ZiDaCap_ID)
 	{
 		return zidaCap_info.relative_EBpct;

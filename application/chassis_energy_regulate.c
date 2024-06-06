@@ -78,12 +78,17 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 		break;
 	}
 	
+	// 超级电容能量低时, 可以override用户操作离开BOOST模式
+	if(chassis_energy->chassis_energy_mode == CHASSIS_BOOST && (cer_get_current_cap_relative_pct() < cer_get_current_cap_boost_mode_pct_threshold()) )
+	{
+		chassis_energy->chassis_energy_mode = CHASSIS_NORMAL;
+	}
+	
 	// 刷新UI
 	if(chassis_energy->last_chassis_energy_mode != chassis_energy->chassis_energy_mode)
 	{
 		set_interactive_flag_chassis_energy_mode_flag(1);
 	}
-	
 	chassis_energy->last_chassis_energy_mode = chassis_energy->chassis_energy_mode;
 	
 	// 按照最终确定的模式来判断小陀螺转速

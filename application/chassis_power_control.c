@@ -222,16 +222,12 @@ void gen2_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 						if(cpc_cap_energy.current_loop_cnt >= 8)
 						{
 							//达到设定循环次数上限 直接削弱目标电流来保证
-							//cpc_buffer_energy.total_current_limit = (fp32)cpc_buffer_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
-	//						if(cpc_buffer_energy.total_current > cpc_buffer_energy.total_current_limit)
-	//						{
-								//fp32 current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
-								current_scale = cpc_cap_energy.total_current_limit / cpc_cap_energy.total_current;
-								chassis_power_control->motor_speed_pid[0].out*=current_scale;
-								chassis_power_control->motor_speed_pid[1].out*=current_scale;
-								chassis_power_control->motor_speed_pid[2].out*=current_scale;
-								chassis_power_control->motor_speed_pid[3].out*=current_scale;
-	//						}
+							current_scale = cpc_cap_energy.total_current_limit / cpc_cap_energy.total_current;
+							chassis_power_control->motor_speed_pid[0].out*=current_scale;
+							chassis_power_control->motor_speed_pid[1].out*=current_scale;
+							chassis_power_control->motor_speed_pid[2].out*=current_scale;
+							chassis_power_control->motor_speed_pid[3].out*=current_scale;
+
 							cpc_cap_energy.adp_pwr_ctrl_result_status = adp_cpc_MAX_loop_cnt_reached;
 							break;
 						}
@@ -285,10 +281,192 @@ void gen2_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 
 }
 
-// 第三代超级电容 裁判系统离线的情况下工况
+// 第三代超级电容 仅有 裁判系统离线的情况下工况
 void gen3_superCap_ref_sys_error_case_sacpc(chassis_move_t *chassis_power_control)
 {
+	/* 如果发生了裁判系统离线, 就盯着 第三代超级电容发聩的最大可补足电流来限制
+	 为了避免不必要的刹车, 也没有底盘关断功能 */
 	
+	//fp32 current_scale;
+
+	cpc_buffer_energy.robot_id = get_robot_id();
+
+	/*---更新一下需要用到的 动态变动的数据---*/
+	cpc_buffer_energy.chassis_power_limit = get_chassis_power_limit();
+	if(cpc_buffer_energy.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) //( (cpc_buffer_energy.chassis_power_limit>MAX_REASONABLE_CHARGE_PWR) || (cpc_buffer_energy.chassis_power_limit <0) )
+	{//识别 并处理 不合理数值
+		cpc_buffer_energy.chassis_power_limit = MAX_REASONABLE_CHARGE_PWR;
+	}
+	
+	//从裁判系统获取当前缓冲能量
+	cpc_get_chassis_power_and_buffer(&cpc_buffer_energy.chassis_power, &cpc_buffer_energy.chassis_power_buffer);
+	
+	//识别 并处理 chassis_power 和 chassis_power_buffer 不合理数值；--- SZL: 暂时不处理 ---
+	
+	//judge output cut-off point based on remaining energy and set the buffer ene critical val point
+	/* ENERGY_BUFF_OUTPUT_CUTOFF_POINT = 3, 6; MINIMUM_ENERGY_BUFF=10, 13*/
+	if(cpc_buffer_energy.chassis_power_buffer <= ENERGY_BUFF_OUTPUT_CUTOFF_POINT)
+	{//一定产生cut off条件
+		cpc_buffer_energy.critical_power_buffer = MINIMUM_ENERGY_BUFF;
+	}
+	else if(cpc_buffer_energy.chassis_power_buffer >= MINIMUM_ENERGY_BUFF)
+	{//一定关闭cut off条件
+		cpc_buffer_energy.critical_power_buffer = ENERGY_BUFF_OUTPUT_CUTOFF_POINT;
+	}
+	else
+	{// default sts
+		cpc_buffer_energy.critical_power_buffer = ENERGY_BUFF_OUTPUT_CUTOFF_POINT;
+	}
+	
+	//超级电容能量 按照gen3 超级电容反馈的当前最大能补足的功率上限
+	// gen3cap_Pmax_spt 的一个估计值就是 Vbank * 15
+	cpc_cap_energy.gen3cap_Pmax_spt = fp32_constrain(cpc_get_gen3Cap_Pmax(), cpc_buffer_energy.chassis_power_limit, 500.5f);
+	cpc_cap_energy.gen3cap_spt_total_current_limit = (fp32)cpc_cap_energy.gen3cap_Pmax_spt / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+	
+	//从 超级电容 获取当前剩余能量 获取当前使用的超级电容的剩余能量
+	cpc_get_superCap_vol_and_energy(&cpc_cap_energy.superCap_vol, &cpc_cap_energy.superCap_e_buffer);
+	cpc_cap_energy.superCap_charge_pwr = (uint16_t)cpc_get_superCap_charge_pwr();
+	
+	//根据超级电容电压计算 上限电流 并且综合 (gen3 超级电容反馈的当前最大能补足的功率上限 电流) => total_current_limit
+	if(cpc_cap_energy.superCap_vol >= gen3Cap_WARNING_VOL)
+	{//功率限制
+		//cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_buffer - MINIMUM_ENERGY_BUFF) / CHASSIS_REFEREE_COMM_TIME;
+		cpc_cap_energy.p_max = gen3Cap_LARGE_POWER_VALUE;
+		
+		cpc_cap_energy.p_max = fp32_constrain(cpc_cap_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, gen3Cap_MAX_POWER_VALUE);//最大功率的 限制
+		//convert p_max to total_current_limit for esc raw values
+		cpc_cap_energy.cap_vol_cali_total_current_limit = (fp32)cpc_cap_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+		
+		// 此融合用 两者最小值 可修改
+		cpc_cap_energy.total_current_limit = CPC_MIN(cpc_cap_energy.cap_vol_cali_total_current_limit, cpc_cap_energy.gen3cap_spt_total_current_limit);
+	}
+	else if(cpc_cap_energy.superCap_vol > gen3Cap_MINIMUM_VOL && cpc_cap_energy.superCap_vol < gen3Cap_WARNING_VOL)
+	{//功率限制
+		//cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_buffer - MINIMUM_ENERGY_BUFF) / CHASSIS_REFEREE_COMM_TIME;
+		cpc_cap_energy.p_max = gen3Cap_MEDIUM_POWER_VALUE;
+		
+		cpc_cap_energy.p_max = fp32_constrain(cpc_cap_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, gen3Cap_MAX_POWER_VALUE);//最大功率的 限制
+		//convert p_max to total_current_limit for esc raw values
+		cpc_cap_energy.cap_vol_cali_total_current_limit = (fp32)cpc_cap_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+		
+		// 此融合用 两者最小值 可修改
+		cpc_cap_energy.total_current_limit = CPC_MIN(cpc_cap_energy.cap_vol_cali_total_current_limit, cpc_cap_energy.gen3cap_spt_total_current_limit);
+	}
+	else
+	{//功率限制
+		// 依然按照一个 功率限制来限幅 目前就按照超级电容下发功率来
+		cpc_cap_energy.p_max = gen3Cap_SMALL_POWER_VALUE;
+		//cpc_buffer_energy.p_max = (fp32)(cpc_buffer_energy.chassis_power_limit + 10.0f); // uncomment会用上最后一段缓冲能量
+		
+		cpc_cap_energy.p_max = fp32_constrain(cpc_cap_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, gen3Cap_MAX_POWER_VALUE);//最大功率的 限制
+		//convert p_max to total_current_limit for esc raw values
+		cpc_cap_energy.cap_vol_cali_total_current_limit = (fp32)cpc_cap_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+		
+		// 此融合用 两者最小值 可修改
+		cpc_cap_energy.total_current_limit = CPC_MIN(cpc_cap_energy.cap_vol_cali_total_current_limit, cpc_cap_energy.gen3cap_spt_total_current_limit);
+		//cpc_cap_energy.total_current_limit = cpc_cap_energy.cap_vol_cali_total_current_limit; // uncomment会用上最后一段缓冲能量
+		
+//		// 6-1-2024 经过测试 该debuff限幅过了
+//		//缓冲能量达到或者小于危险值了, debuff电流上限
+//		fp32 power_scale = cpc_cap_energy.superCap_vol / gen3Cap_WARNING_VOL;
+//		map_superCap_charge_pwr_to_debuff_total_current_limit(cpc_cap_energy.superCap_charge_pwr, &(cpc_cap_energy.buffer_debuff_total_current_limit));//fp32 buffer_debuff_total_current_limit;
+//		cpc_cap_energy.total_current_limit = cpc_cap_energy.buffer_debuff_total_current_limit * power_scale;
+//		//反着更新 p_max
+//		cpc_cap_energy.p_max = cpc_cap_energy.total_current_limit / 1000.0f * 24.0f;
+		
+//		// !!第二代超级电容功能!! 保证当前底盘输出功率 小于等于 裁判系统的功率上限
+//		cpc_cap_energy.p_max = (fp32)cpc_cap_energy.superCap_charge_pwr - 4.0f; //(fp32)chassis_e_ctrl.chassis_power_limit - 4.0f;
+//		
+//		cpc_cap_energy.p_max = fp32_constrain(cpc_cap_energy.p_max, INITIAL_STATE_CHASSIS_POWER_LIM, gen3Cap_MAX_POWER_VALUE);//最大功率的 限制
+//		//convert p_max to total_current_limit for esc raw values
+//		cpc_cap_energy.total_current_limit = (fp32)cpc_cap_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
+	}
+	
+	// 开始不带分段常数控制器 底盘电流控制
+	cpc_cap_energy.ene_cutoff_sts = above_ENERGY_CRITICAL_POINT;//for debug
+	
+	cpc_cap_energy.current_loop_cnt = 0;// init value
+	while(1)
+	{
+		//calculate pid
+		for (uint8_t i = 0; i < 4; i++)
+		{
+				PID_calc(&chassis_power_control->motor_speed_pid[i], chassis_power_control->motor_chassis[i].speed, chassis_power_control->motor_chassis[i].speed_set);
+		}
+		
+		cpc_cap_energy.total_current = 0.0f;
+		//calculate the original motor current set
+		//计算原本电机电流设定
+		for(uint8_t i = 0; i < 4; i++)
+		{
+				cpc_cap_energy.total_current += fabs(chassis_power_control->motor_speed_pid[i].out);
+		}
+		cpc_cap_energy.total_current_unit_amp = cpc_cap_energy.total_current / 1000.0f;//convert esc control value to unit amp current
+		
+		if(cpc_cap_energy.total_current > cpc_cap_energy.total_current_limit)//cpc_buffer_energy.total_current_unit_amp * 24.0f > cpc_buffer_energy.p_max)
+		{
+//				  fp32 speed_adp_scale;
+				
+				cpc_cap_energy.current_loop_cnt++;
+				if(cpc_cap_energy.current_loop_cnt >= 8)
+				{
+					//达到设定循环次数上限 直接削弱目标电流来保证
+					current_scale = cpc_cap_energy.total_current_limit / cpc_cap_energy.total_current;
+					chassis_power_control->motor_speed_pid[0].out*=current_scale;
+					chassis_power_control->motor_speed_pid[1].out*=current_scale;
+					chassis_power_control->motor_speed_pid[2].out*=current_scale;
+					chassis_power_control->motor_speed_pid[3].out*=current_scale;
+
+					cpc_cap_energy.adp_pwr_ctrl_result_status = adp_cpc_MAX_loop_cnt_reached;
+					break;
+				}
+				else
+				{
+					//adapt speed
+					speed_adp_scale = 0.99f; //cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current; //cpc_buffer_energy.p_max / (cpc_buffer_energy.total_current_unit_amp * 24.0f);
+					chassis_power_control->motor_chassis[0].speed_set *= speed_adp_scale;
+					chassis_power_control->motor_chassis[1].speed_set *= speed_adp_scale;
+					chassis_power_control->motor_chassis[2].speed_set *= speed_adp_scale;
+					chassis_power_control->motor_chassis[3].speed_set *= speed_adp_scale;
+				}
+		}
+		else
+		{
+			cpc_cap_energy.adp_pwr_ctrl_result_status = adp_cpc_NORMAL;
+			break;
+		}
+	}
+		
+	//values and FSM for debug regarding speed-adaptive power ctrl algorithm
+	if(cpc_cap_energy.adp_pwr_ctrl_result_status == adp_cpc_MAX_loop_cnt_reached)
+	{
+		cpc_cap_energy.num_loop_limit_reached++;
+	}
+	else
+	{
+		if(cpc_cap_energy.current_loop_cnt != 0)
+		{
+			cpc_cap_energy.num_of_normal_loop++;
+		}
+		
+		if(cpc_cap_energy.current_loop_cnt > cpc_cap_energy.max_speed_adp_loop_cnt)
+		{
+			cpc_cap_energy.max_speed_adp_loop_cnt = cpc_cap_energy.current_loop_cnt;
+		}
+	}
+	
+	//values for debug
+	cpc_cap_energy.motor_final_current[0] = chassis_power_control->motor_speed_pid[0].out;
+	cpc_cap_energy.motor_final_current[1] = chassis_power_control->motor_speed_pid[1].out;
+	cpc_cap_energy.motor_final_current[2] = chassis_power_control->motor_speed_pid[2].out;
+	cpc_cap_energy.motor_final_current[3] = chassis_power_control->motor_speed_pid[3].out;
+	
+	cpc_cap_energy.motor_final_total_current = 0;
+	for(uint8_t i = 0; i < 4; i++)
+	{
+		cpc_cap_energy.motor_final_total_current += fabs(cpc_buffer_energy.motor_final_current[i]);
+	}
+
 }
 
 // 第三代超级电容 正常工况下 底盘功率控制
@@ -488,16 +666,12 @@ void gen3_superCap_speed_adaptive_chassis_power_control(chassis_move_t *chassis_
 					if(cpc_buffer_energy.current_loop_cnt >= 8)
 					{
 						//达到设定循环次数上限 直接削弱目标电流来保证
-						//cpc_buffer_energy.total_current_limit = (fp32)cpc_buffer_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
-//						if(cpc_buffer_energy.total_current > cpc_buffer_energy.total_current_limit)
-//						{
-							//fp32 current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
-							current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
-							chassis_power_control->motor_speed_pid[0].out*=current_scale;
-							chassis_power_control->motor_speed_pid[1].out*=current_scale;
-							chassis_power_control->motor_speed_pid[2].out*=current_scale;
-							chassis_power_control->motor_speed_pid[3].out*=current_scale;
-//						}
+						current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
+						chassis_power_control->motor_speed_pid[0].out*=current_scale;
+						chassis_power_control->motor_speed_pid[1].out*=current_scale;
+						chassis_power_control->motor_speed_pid[2].out*=current_scale;
+						chassis_power_control->motor_speed_pid[3].out*=current_scale;
+
 						cpc_buffer_energy.adp_pwr_ctrl_result_status = adp_cpc_MAX_loop_cnt_reached;
 						break;
 					}
@@ -708,16 +882,12 @@ void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
 						if(cpc_buffer_energy.current_loop_cnt >= 8)
 						{
 							//达到设定循环次数上限 直接削弱目标电流来保证
-							//cpc_buffer_energy.total_current_limit = (fp32)cpc_buffer_energy.p_max / 24.0f * 1000.0f;//* 1000.0f is to convert metric unit var to esc control raw value
-	//						if(cpc_buffer_energy.total_current > cpc_buffer_energy.total_current_limit)
-	//						{
-								//fp32 current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
-								current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
-								chassis_power_control->motor_speed_pid[0].out*=current_scale;
-								chassis_power_control->motor_speed_pid[1].out*=current_scale;
-								chassis_power_control->motor_speed_pid[2].out*=current_scale;
-								chassis_power_control->motor_speed_pid[3].out*=current_scale;
-	//						}
+							current_scale = cpc_buffer_energy.total_current_limit / cpc_buffer_energy.total_current;
+							chassis_power_control->motor_speed_pid[0].out*=current_scale;
+							chassis_power_control->motor_speed_pid[1].out*=current_scale;
+							chassis_power_control->motor_speed_pid[2].out*=current_scale;
+							chassis_power_control->motor_speed_pid[3].out*=current_scale;
+
 							cpc_buffer_energy.adp_pwr_ctrl_result_status = adp_cpc_MAX_loop_cnt_reached;
 							break;
 						}
@@ -774,6 +944,40 @@ void speed_adaptive_chassis_power_control(chassis_move_t *chassis_power_control)
 // 速度自适应 底盘功率控制 通用接口
 void general_speed_adaptive_chassis_power_control(chassis_move_t *sacpc)
 {
+	// 判断是否是接入了第三代超级电容
+	if(get_current_superCap() == gen3Cap_ID)
+	{
+		// 特殊1: 当超级电容收到了错误码时 error_proc会是的toe is err, 直接不用电容 -> 以下case包括了
+		
+		if(toe_is_error(GEN3CAP_TOE))
+		{
+			// cap 离线 或 发生error code时
+			speed_adaptive_chassis_power_control(sacpc);
+		}
+		else
+		{
+			// cap 无错误:
+			
+			if(toe_is_error(REFEREE_TOE))
+			{
+				// ref 离线
+				gen3_superCap_ref_sys_error_case_sacpc(sacpc);
+			}
+			else
+			{
+				// ref和cap都正常工作
+				gen3_superCap_speed_adaptive_chassis_power_control(sacpc);
+			}
+		}
+	}
+	else if(get_current_superCap() == gen2Cap_ID || get_current_superCap() == ZiDaCap_ID || get_current_superCap() == WuLieCap_CAN_ID)
+	{
+		gen2_superCap_speed_adaptive_chassis_power_control(sacpc);
+	}
+	else
+	{
+		speed_adaptive_chassis_power_control(sacpc);
+	}
 }
 
 static void map_superCap_charge_pwr_to_debuff_total_current_limit(uint16_t charge_pwr, fp32* total_i_lim)

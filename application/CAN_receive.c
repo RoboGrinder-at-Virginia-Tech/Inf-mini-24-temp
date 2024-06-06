@@ -497,7 +497,7 @@ void userCallback_CAN1_FIFO0_IT(CAN_HandleTypeDef *hcan)
 							gen3Cap_info.Vbank_f = gen3Cap_info.PowerData[0]; //输入电压
 							gen3Cap_info.Pchassis_f = gen3Cap_info.PowerData[1];//底盘功率
 							gen3Cap_info.Pmax_f = gen3Cap_info.PowerData[2];//当前能补足的最大功率
-							gen3Cap_info.Pflag = rx_data[6];
+							gen3Cap_info.Pflag = (cap_Pflag_e) rx_data[6];
 						
 							//计算容量
 							gen3Cap_info.EBank = 0.5f * gen3Cap_info.Vbank_f * gen3Cap_info.Vbank_f * CAPACITY_GEN3_CAP;//CAPACITY=6
