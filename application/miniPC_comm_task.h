@@ -107,12 +107,12 @@ typedef struct
 
 /* -------------------------------- USART SEND -------------------------------- */
 //this value is used for fifo - software fifo buffer
-#define MINIPC_COMM_TX_FIFO_BUF_LENGTH 128 //1024
+#define MINIPC_COMM_TX_FIFO_BUF_LENGTH 512 //128 //1024
 
 //This is the DMA buff length
-#define MINIPC_COMM_UART_DMA_TX_BUF_LENGHT 128 //512
+#define MINIPC_COMM_UART_DMA_TX_BUF_LENGHT 512 //128 //512
 
-#define MINIPC_COMM_FRAME_MAX_SIZE 64 //send temp ram buffer -NOT 40 as before --- might cause outo of bound pointer
+#define MINIPC_COMM_FRAME_MAX_SIZE 136 //send temp ram buffer-40 before - 整帧长度最多 136
 
 typedef struct
 {
@@ -138,11 +138,11 @@ typedef struct
 	
 	//the # of time that send failed
 	uint32_t relative_send_fail_cnts; //relative send counts, will use this to enforce dma tx poll
+	uint32_t high_frequency_relative_send_fail_cnts;
 	
+	uint32_t base_gimbal_info_embed_send_timestamp; //current time stamp
 	
-	uint32_t chassis_info_embed_send_TimeStamp; //current time stamp
-	
-	uint32_t gimbal_info_embed_send_TimeStamp;
+	uint32_t referee_info_embed_send_timestamp;
 
 }embed_send_protocol_t;
 
