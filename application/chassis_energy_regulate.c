@@ -98,7 +98,7 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 			// 当有按键输入时, 降低小陀螺转速
 			if (fabs(chassis_energy->vx_set) > 0.01 || fabs(chassis_energy->vy_set) > 0.01)
 			{
-				chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+				chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(90);
 				chassis_energy->moving_timestamp = current_time;
 			} else {
 				// 底盘刚停下in place时, 有一个延时, 平滑过渡 --> 再小陀螺加速
@@ -106,13 +106,13 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 				{
 					chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(120); // 100
 				} else {
-					chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+					chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(90);
 				}
 			}
 		break;
 		
 		case CHASSIS_NORMAL:
-			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(90);
 		break;
 		
 		case CHASSIS_CHARGE:
