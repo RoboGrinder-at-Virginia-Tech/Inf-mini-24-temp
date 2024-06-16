@@ -86,7 +86,7 @@ MOTOR_DISTANCE_TO_CENTER是车轮到旋转中心的距离 = 0.258093975f
 4-21-2023 mini infantry
 MOTOR_DISTANCE_TO_CENTER是车轮到旋转中心的距离 = 0.211585f
 */
-#define MOTOR_DISTANCE_TO_CENTER 0.211585f //0.258093975f //0.353553391f //0.358f //0.3525f
+#define MOTOR_DISTANCE_TO_CENTER 0.258093975f //0.258093975f //0.353553391f //0.358f //0.3525f
 #define OMNI_WHEEL_RADIUS 0.0762f
 //sin cos各个象限的45度 绝对值等于 omni wheel angle inverse kinematics coefficient
 #define OWHE_ANG_INVK_COEF 0.707106781f
@@ -118,14 +118,14 @@ SZL 5-21-2022 重新算
 4-21-2024: new mini infantry: 轮子直径d = 152.4mm, r = 152.4/2 = 76.2mm = 0.0762m 或 直径测量的 r = 0.08076m
 2pi/60 * 1/14 * (0.0762m Hex轮子半径) = 5.699746672e-4
 */
-#define CHASSIS_MOTOR_RPM_TO_VECTOR_SEN 5.699746672e-4
+#define CHASSIS_MOTOR_RPM_TO_VECTOR_SEN 4.188790205e-4
 
 //single chassis motor max speed
 //单个底盘电机最大速度
 #define MAX_WHEEL_SPEED 8.0f 
 //chassis forward or back max speed
 //底盘运动过程最大前进速度
-#define NORMAL_MAX_CHASSIS_SPEED_X 3.0f //5.0f
+#define NORMAL_MAX_CHASSIS_SPEED_X 5.0f //3.0f //5.0f
 
 #define SPIN_SPEED 8.0f //12.56f //6.66f //5.0f //4.0f //3.3f 3.0f //小陀螺速度
 /*
@@ -136,24 +136,24 @@ SZL 5-21-2022 重新算
 /*原始参数: NORMAL_MAX_CHASSIS_SPEED_Y 3.0f*/
 //chassis left or right max speed
 //底盘运动过程最大平移速度
-#define NORMAL_MAX_CHASSIS_SPEED_Y 1.25f //2.3f
+#define NORMAL_MAX_CHASSIS_SPEED_Y 5.0f //1.25f //2.3f
 
-#define LINEAR_THROTTLE_BOOST_TARGET_SPEED 3.5f
-#define LINEAR_THROTTLE_BOOST_STEP 7.0f //5.0f //0.05f
-#define LINEAR_THROTTLE_BOOST_INIT_SPEED 0.3f //0.18f
+#define LINEAR_THROTTLE_BOOST_TARGET_SPEED 5.0f //3.5f
+#define LINEAR_THROTTLE_BOOST_STEP 10.0f //7.0f //5.0f //0.05f
+#define LINEAR_THROTTLE_BOOST_INIT_SPEED 3.0f //0.3f //0.18f
 
-#define LINEAR_THROTTLE_NORMAL_TARGET_SPEED 1.7f
+#define LINEAR_THROTTLE_NORMAL_TARGET_SPEED 2.0f //1.7f
 #define LINEAR_THROTTLE_NORMAL_STEP 3.0f //0.015f
 #define LINEAR_THROTTLE_NORMAL_INIT_SPEED 0.1f
 
-#define LINEAR_THROTTLE_CHARGE_TARGET_SPEED 1.7f
+#define LINEAR_THROTTLE_CHARGE_TARGET_SPEED 2.0f //1.7f
 #define LINEAR_THROTTLE_CHARGE_STEP 3.0f //0.015f
 #define LINEAR_THROTTLE_CHARGE_INIT_SPEED 0.1f
 
 //chassis motor speed PID
 //底盘电机速度环PID
 #define M3505_MOTOR_SPEED_PID_KP 9000.0f
-#define M3505_MOTOR_SPEED_PID_KI 10.0f
+#define M3505_MOTOR_SPEED_PID_KI 0.0f //10.0f
 #define M3505_MOTOR_SPEED_PID_KD 0.1f
 #define M3505_MOTOR_SPEED_PID_MAX_OUT MAX_MOTOR_CAN_CURRENT
 #define M3505_MOTOR_SPEED_PID_MAX_IOUT 2000.0f
