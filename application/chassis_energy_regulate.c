@@ -121,7 +121,7 @@ void chassis_energy_regulate(chassis_move_t *chassis_energy)
 
 		default:
 			// as normal
-			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(90);
+			chassis_energy->spin_speed = RAD_PER_SEC_FROM_RPM(70);
 		break;
 	}
 }
