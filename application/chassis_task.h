@@ -122,10 +122,10 @@ SZL 5-21-2022 重新算
 
 //single chassis motor max speed
 //单个底盘电机最大速度
-#define MAX_WHEEL_SPEED 8000.0f //8.0f // -------待测试!!!!
+#define MAX_WHEEL_SPEED 20.0f //8.0f // -------待测试!!!!
 //chassis forward or back max speed
 //底盘运动过程最大前进速度
-#define NORMAL_MAX_CHASSIS_SPEED_X 15.0f //3.0f //5.0f
+#define NORMAL_MAX_CHASSIS_SPEED_X 5.0f //3.0f //5.0f
 
 #define SPIN_SPEED 8.0f //12.56f //6.66f //5.0f //4.0f //3.3f 3.0f //小陀螺速度
 /*
@@ -136,18 +136,18 @@ SZL 5-21-2022 重新算
 /*原始参数: NORMAL_MAX_CHASSIS_SPEED_Y 3.0f*/
 //chassis left or right max speed
 //底盘运动过程最大平移速度
-#define NORMAL_MAX_CHASSIS_SPEED_Y 15.0f //1.25f //2.3f
+#define NORMAL_MAX_CHASSIS_SPEED_Y 5.0f //1.25f //2.3f
 
-#define LINEAR_THROTTLE_BOOST_TARGET_SPEED 10.0f //3.5f
-#define LINEAR_THROTTLE_BOOST_STEP 20.0f //7.0f //5.0f //0.05f
-#define LINEAR_THROTTLE_BOOST_INIT_SPEED 8.0f //0.3f //0.18f
+#define LINEAR_THROTTLE_BOOST_TARGET_SPEED 5.0f //3.5f
+#define LINEAR_THROTTLE_BOOST_STEP 10.0f //7.0f //5.0f //0.05f
+#define LINEAR_THROTTLE_BOOST_INIT_SPEED 3.0f //0.3f //0.18f
 
-#define LINEAR_THROTTLE_NORMAL_TARGET_SPEED 5.0f //2.0f //1.7f
-#define LINEAR_THROTTLE_NORMAL_STEP 10.0f //3.0f //0.015f
+#define LINEAR_THROTTLE_NORMAL_TARGET_SPEED 2.0f //1.7f
+#define LINEAR_THROTTLE_NORMAL_STEP 3.0f
 #define LINEAR_THROTTLE_NORMAL_INIT_SPEED 0.1f
 
-#define LINEAR_THROTTLE_CHARGE_TARGET_SPEED 5.0f
-#define LINEAR_THROTTLE_CHARGE_STEP 10.0f
+#define LINEAR_THROTTLE_CHARGE_TARGET_SPEED 2.0f //1.7f
+#define LINEAR_THROTTLE_CHARGE_STEP 3.0f
 #define LINEAR_THROTTLE_CHARGE_INIT_SPEED 0.1f
 
 //chassis motor speed PID
